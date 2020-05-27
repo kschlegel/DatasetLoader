@@ -34,6 +34,7 @@ class LSP(DatasetLoader):
         # respective sets
         self._trainingset = [i for i in range(1000)]
         self._testset = [i for i in range(1000, 2000)]
+        self._length = 2000
 
         filename_tail = ""
         if small:
@@ -41,11 +42,10 @@ class LSP(DatasetLoader):
         raw_data = loadmat(
             os.path.join(base_folder, "joints" + filename_tail + ".mat"))
         self._data["keypoints"] = np.transpose(raw_data['joints'])
-        self._filenames = []
         for i in trange(0, 2000):
             self._data["filenames"].append(
                 os.path.join(
                     base_folder, "images" + filename_tail, "im" +
                     ("0" * (4 - len(str(i + 1)))) + str(i + 1) + ".jpg"))
-        for key in self._data.keys():
-            self._data[key] = np.array(self._data[key])
+
+        self._data["filenames"] = np.array(self._data["filenames"])

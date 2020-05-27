@@ -3,9 +3,11 @@ import numpy as np
 import pytest
 
 from .. import LSP
+from .. import LSPExtended
 from .. import JHMDB
 from .. import HARPET
 from .. import MPII
+from .. import UCFSports
 
 DS_PATH = "../../datasets"
 
@@ -26,6 +28,20 @@ class TestDataLoaders():
         assert filename.endswith("images/im0001.jpg")
         np.testing.assert_allclose(keypoints[0],
                                    np.array([473.95283, 552.631521, 0.]))
+
+    def test_LSPExtended(self):
+        lsp = LSPExtended(os.path.join(DS_PATH, "lsp_extended"))
+        # check dataset sizes and get_data accessors on different elements
+        assert lsp.get_data("filenames")[0].shape == (10000, )
+        assert lsp.get_data("keypoints")[0].shape == (10000, 14, 3)
+        with pytest.raises(Exception):
+            lsp.get_data("filenames", "train")
+
+        lsp = LSPExtended(os.path.join(DS_PATH, "lsp_extended_improved"),
+                          improved=True)
+        # check dataset sizes and get_data accessors on different elements
+        assert lsp.get_data("filenames")[0].shape == (9428, )
+        assert lsp.get_data("keypoints")[0].shape == (9428, 14, 3)
 
     def test_JHMDB(self):
         jhmdb = JHMDB(os.path.join(DS_PATH, "jhmdb"), 1)
@@ -111,3 +127,36 @@ class TestDataLoaders():
         np.testing.assert_allclose(centre, np.array([[594, 257], [952, 222]]))
         np.testing.assert_allclose(
             head_bbox, np.array([[627, 100, 706, 198], [841, 145, 902, 228]]))
+
+    def test_UCFSports(self):
+        ucf = UCFSports(os.path.join(DS_PATH, "ucf_sports_actions"))
+        assert ucf.get_data("filenames")[0].shape == (150, )
+
+        expected_counts = [14, 18, 20, 6, 12, 13, 12, 20, 13, 22]
+        counts = np.bincount(ucf.get_data("actions")[0])
+        for cls_id in range(10):
+            assert expected_counts[cls_id] == counts[cls_id]
+
+        image_names, bboxes = ucf.get_data(("image_names", "bboxes"))
+        no_bboxes = 0
+        no_images = 0
+        for i in range(150):
+            if bboxes[i].shape[0] == 0:
+                # these are the 6 lifting videos and walking 5,19,20,21
+                no_bboxes += 1
+            elif len(image_names[i]) == 0:
+                # these are all golf swing back and golf swing front 2
+                no_images += 1
+            else:
+                # if bboxes and images are given there should be a bbox entry
+                # for each frame
+                assert bboxes[i].shape[1] == len(image_names[i])
+        assert no_bboxes == 10
+        assert no_images == 6
+
+        no_filename = 0
+        for filename in ucf.get_iterator("filenames"):
+            if filename[0] == "":
+                # these are diving 8-14
+                no_filename += 1
+        assert no_filename == 7

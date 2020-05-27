@@ -129,8 +129,8 @@ class MPII(DatasetLoader):
                                 data_pt[pt.id] = [pt.x, pt.y, pt.is_visible]
                             data_pt = np.array(data_pt, dtype=np.float64)
                     else:
-                        # if this is a training image and I don't have keypoint data
-                        # then it is useless
+                        # if this is a training image and I don't have keypoint
+                        # data then it is useless
                         continue
                 keypoints.append(data_pt)
                 centres.append(centre)

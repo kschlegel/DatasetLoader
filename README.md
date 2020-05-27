@@ -37,9 +37,11 @@ dataset.from_iterator(dataset.get_iterator(("keypoints", "actions"), "train"))
 ## Datasets
 The datasets currently supported are:
 * [LSP](https://sam.johnson.io/research/lsp.html) - Leeds Sports Pose 
+* [LSP Extended](https://sam.johnson.io/research/lspet.html) - Leeds Sports Pose Extended 
 * [JHMDB](http://jhmdb.is.tue.mpg.de/) - Joint-annotated Human Motion Data Base
 * [HARPET](https://uwaterloo.ca/vision-image-processing-lab/research-demos/vip-harpet-dataset) - Hockey Action Recognition and Pose Estimation in Temporal Space
 * [MPII](http://human-pose.mpi-inf.mpg.de/) - MPII Human Pose
+* [UCF Sports](https://www.crcv.ucf.edu/data/UCF_Sports_Action.php) - UCF Sports Action Dataset 
 
 ## Requirements
 * numpy
