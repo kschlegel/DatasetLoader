@@ -12,7 +12,7 @@ class HARPET(DatasetLoader):
     https://uwaterloo.ca/vision-image-processing-lab/research-demos/vip-harpet-dataset
     """
 
-    classes = ["Backward", "Forward", "Passing", "Shooting"]
+    actions = ["Backward", "Forward", "Passing", "Shooting"]
     landmarks = [
         "right ankle", "right knee", "right hip", "left hip", "left knee",
         "left ankle", "pelvis", "thorax", "neck", "head top", "right wrist",
@@ -31,23 +31,29 @@ class HARPET(DatasetLoader):
         # lists to hold all information contained in the dataset
         # Elements of filenames here are 3-tuples of the 3 frames forming one
         # sequence
-        self._data = {"filenames": [], "keypoints": [], "actions": []}
+        self._data = {"image-filenames": [], "keypoints": [], "actions": []}
         # describe the dataset split, containing the ids of elements in the
         # respective sets
-        self._trainingset = []
-        self._validationset = []
-        self._testset = []
+        self._splits = {"default": {"train": [], "valid": [], "test": []}}
+        self._default_split = "default"
 
+        # load training set
         self._parse_h5_file(base_folder, "train")
         set_len = len(self._data["actions"])
-        self._trainingset = [i for i in range(set_len)]
+        self._splits[self._default_split]["train"] = [
+            i for i in range(set_len)
+        ]
+        # load validation set
         self._parse_h5_file(base_folder, "valid")
-        self._validationset = [
+        self._splits[self._default_split]["valid"] = [
             i for i in range(set_len, len(self._data["actions"]))
         ]
         set_len = len(self._data["actions"])
+        # load test set
         self._parse_h5_file(base_folder, "test")
-        self._testset = [i for i in range(set_len, len(self._data["actions"]))]
+        self._splits[self._default_split]["test"] = [
+            i for i in range(set_len, len(self._data["actions"]))
+        ]
         self._length = len(self._data["actions"])
 
         for key in self._data.keys():
@@ -74,6 +80,6 @@ class HARPET(DatasetLoader):
                 action = filenames[i][14:filenames[i].find("_")]
                 filenames[i] = os.path.join(base_folder, "images_" + split,
                                             filenames[i])
-            self._data["filenames"].append(tuple(filenames))
+            self._data["image-filenames"].append(tuple(filenames))
             self._data["keypoints"].append(h5_file["part"][seq:seq + 3])
-            self._data["actions"].append(HARPET.classes.index(action))
+            self._data["actions"].append(HARPET.actions.index(action))

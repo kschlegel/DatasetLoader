@@ -4,11 +4,6 @@ class DatasetLoader():
     retrieving the data out of the dataset object.
     """
     def __init__(self):
-        # describe the dataset split, containing the ids of elements in the
-        # respective sets
-        self._trainingset = None
-        self._validationset = None
-        self._testset = None
         # Different datasets will have different elements so safer to keep
         # track of length rather than checking the length of any given list
         self._length = 0
@@ -27,7 +22,7 @@ class DatasetLoader():
         """
         return (data_key in self._data)
 
-    def get_data(self, data_keys, subset="all"):
+    def get_data(self, data_keys, subset="all", split="default"):
         """
         Returns a list of the data.
 
@@ -43,31 +38,26 @@ class DatasetLoader():
             One of {‘train’, ‘valid’, ‘test’, ‘all’}. Some
             datasets may not have a pre-defined split, an exception will be
             raised when trying to get a subset set which doesn't exist.
+        split : string, optional (default is 'default')
+            if the dataset definition includes splits into training, test and
+            possibly validation set, the split can be chosen using this
+            parameter. Valid split names depend on the dataset.
         """
         data_keys = self._check_keys(data_keys)
         if subset == "all":
-            return [self._data[key] for key in data_keys]
-        elif subset == "train":
-            if self._trainingset is not None:
-                index_set = self._trainingset
+            if len(data_keys) == 1:
+                return self._data[data_keys[0]]
             else:
-                raise Exception("This dataset doesn't have a training set.")
-        elif subset == "valid":
-            if self._validationset is not None:
-                index_set = self._validationset
-            else:
-                raise Exception("This dataset doesn't have a validation set.")
-        elif subset == "test":
-            if self._testset is not None:
-                index_set = self._testset
-            else:
-                raise Exception("This dataset doesn't have a test set.")
+                return [self._data[key] for key in data_keys]
         else:
-            raise Exception(
-                "subset must be one of {‘train’, ‘valid’, ‘test’, ‘all’}.")
-        return [self._data[key][index_set] for key in data_keys]
+            index_set = self._get_index_set(subset, split)
 
-    def get_iterator(self, data_keys, subset="all"):
+        if len(data_keys) == 1:
+            return self._data[data_keys[0]][index_set]
+        else:
+            return [self._data[key][index_set] for key in data_keys]
+
+    def get_iterator(self, data_keys, subset="all", split="default"):
         """
         Returns an iterator over the data.
 
@@ -83,25 +73,23 @@ class DatasetLoader():
             One of {‘train’, ‘valid’, ‘test’, ‘all’}. Some
             datasets may not have a pre-defined split, an exception will be
             raised when trying to get a subset set which doesn't exist.
+        split : string, optional (default is 'default')
+            if the dataset definition includes splits into training, test and
+            possibly validation set, the split can be chosen using this
+            parameter. Valid split names depend on the dataset.
         """
         data_keys = self._check_keys(data_keys)
 
         if subset == "all":
             index_set = [i for i in range(self._length)]
-        elif subset == "train":
-            index_set = self._trainingset
-        elif subset == "valid":
-            if self._validationset is not None:
-                index_set = self._validationset
-            else:
-                raise Exception("This dataset doesn't have a validation set.")
-        elif subset == "test":
-            index_set = self._testset
         else:
-            raise Exception(
-                "subset must be one of {‘train’, ‘valid’, ‘test’, ‘all’}.")
+            index_set = self._get_index_set(subset, split)
+
         for i in index_set:
-            yield [self._data[key][i] for key in data_keys]
+            if len(data_keys) == 1:
+                yield self._data[data_keys[0]][i]
+            else:
+                yield [self._data[key][i] for key in data_keys]
 
     def _check_keys(self, data_keys):
         if not isinstance(data_keys, (tuple, list)):
@@ -112,3 +100,18 @@ class DatasetLoader():
                                 "' does not contain '" + key +
                                 "' information!")
         return data_keys
+
+    def _get_index_set(self, subset, split):
+        if self._splits is not None:
+            if split == "default":
+                split = self._default_split
+            if split not in self._splits:
+                raise Exception(split +
+                                " is not a valid split name for this dataset.")
+
+            if subset in self._splits[split]:
+                return self._splits[split][subset]
+            else:
+                raise Exception(" This dataset has no " + subset + " subset.")
+        else:
+            raise Exception("This dataset doesn't have any splits.")

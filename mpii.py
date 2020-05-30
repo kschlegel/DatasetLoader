@@ -19,17 +19,20 @@ class MPII(DatasetLoader):
     ]
     reference_scale = 200
 
-    def __init__(self, base_folder=None, single_person=True):
+    def __init__(self, base_folder, single_person=True):
         """
-        Args
-        base_folder: folder with dataset on disk
-        small: If true load the small, readily cropped images and corresponding
-               keypoints.
+        Parameters
+        ----------
+        base_folder : string
+            folder with dataset on disk
+        single_person : bool, optional (default is True)
+            If true load the small, readily cropped images and corresponding
+            keypoints.
         """
         super().__init__()
         # lists to hold all information contained in the dataset
         self._data = {
-            "filenames": [],
+            "image-filenames": [],
             "keypoints": [],
             "scales": [],
             "centres": [],
@@ -37,8 +40,8 @@ class MPII(DatasetLoader):
         }
         # describe the dataset split, containing the ids of elements in the
         # respective sets
-        self._trainingset = []
-        self._testset = []
+        self._splits = {"default": {"train": [], "test": []}}
+        self._default_split = "default"
 
         print("Loading the data file. This may take a while...")
         raw_data = loadmat(os.path.join(base_folder,
@@ -54,6 +57,9 @@ class MPII(DatasetLoader):
                 if isinstance(person_ids, int):
                     person_ids = [person_ids]
             else:
+                # annorect can be an array of objects or an object of a single
+                # person. I am going to wrap this into a single element list
+                # below
                 try:
                     person_ids = list(
                         range(
@@ -75,6 +81,9 @@ class MPII(DatasetLoader):
             scales = []
             head_bboxes = []
             for person_id in person_ids:
+                # There are many person entries with mistakes. Check each
+                # property for correctness, read it out if correct, fix/ignore
+                # what can be fixed/ignored and skip entries that aren't useful
                 if "objpos" in annotations[person_id]._fieldnames:
                     if isinstance(annotations[person_id].objpos, np.ndarray):
                         # If this is an array, not a struct its always = []
@@ -137,21 +146,23 @@ class MPII(DatasetLoader):
                 scales.append(scale)
                 head_bboxes.append(head_bbox)
 
+            # Save split information
             if is_training == 0:
-                self._testset.append(self._length)
+                self._splits[self._default_split]["test"].append(self._length)
             else:
                 if len(keypoints) == 0:
                     # sometimes for some reason there are images with not a
                     # single skeleton
                     continue
-                self._trainingset.append(self._length)
-            self._data["filenames"].append(
+                self._splits[self._default_split]["train"].append(self._length)
+
+            self._data["image-filenames"].append(
                 os.path.join(base_folder, "images",
                              raw_data["RELEASE"].annolist[img_id].image.name))
             self._data["keypoints"].append(np.array(keypoints))
             self._data["centres"].append(np.array(centres))
             self._data["scales"].append(np.array(scales))
-            self._data["head_bboxes"].append(head_bboxes)
+            self._data["head_bboxes"].append(np.array(head_bboxes))
             self._length += 1
         for key in self._data.keys():
             self._data[key] = np.array(self._data[key])

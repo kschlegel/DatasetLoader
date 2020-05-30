@@ -1,6 +1,5 @@
 import os
 import numpy as np
-from scipy.io import loadmat
 from tqdm import tqdm
 
 from .datasetloader import DatasetLoader
@@ -8,8 +7,8 @@ from .datasetloader import DatasetLoader
 
 class UCFSports(DatasetLoader):
     """
-    JHMDB Dataset - Joint-annotated Human Motion Data Base
-    http://jhmdb.is.tue.mpg.de/
+    UCF Sports Action Dataset
+    https://www.crcv.ucf.edu/data/UCF_Sports_Action.php
     """
 
     classes = [
@@ -26,13 +25,15 @@ class UCFSports(DatasetLoader):
         """
         super().__init__()
         self._data = {
-            "filenames": [],
-            "image_names": [],
+            "video-filenames": [],
+            "image-filenames": [],
             "bboxes": [],
-            "actions": []
+            "actions": [],
+            "viewpoints": []
         }
         # Leave-One-Out cross validation recommended for action recognition
         # Add Action localisation split here for completeness?
+        self._splits = None
 
         viewpoints = ("", "-Front", "-Side", "-Back", "Angle")
         for cls_id, cls in tqdm(enumerate(UCFSports.classes)):
@@ -45,19 +46,25 @@ class UCFSports(DatasetLoader):
                         cur_id = self._length - 1
                         # set filename to blank here as in a few instances it
                         # doesn't exist and should be set to blank in those
-                        # cases
-                        self._data["filenames"].append("")
+                        # cases (this can be fixed with a script from this
+                        # package)
+                        self._data["video-filenames"].append("")
                         self._data["actions"].append(cls_id)
-                        self._data["image_names"].append([])
+                        self._data["image-filenames"].append([])
                         self._data["bboxes"].append([])
+                        if len(vp) > 0 and vp[0] == "-":
+                            self._data["viewpoints"].append(vp)
+                        else:
+                            self._data["viewpoints"].append("")
                         filelist = sorted(
                             os.listdir(os.path.join(cls_folder, video_id)))
                         for filename in filelist:
                             if filename.endswith(".avi"):
-                                self._data["filenames"][cur_id] = os.path.join(
-                                    cls_folder, video_id, filename)
+                                self._data["video-filenames"][
+                                    cur_id] = os.path.join(
+                                        cls_folder, video_id, filename)
                             elif filename.endswith(".jpg"):
-                                self._data["image_names"][cur_id].append(
+                                self._data["image-filenames"][cur_id].append(
                                     os.path.join(cls_folder, video_id,
                                                  filename))
                             elif filename == "gt" or filename == "gt2":
@@ -84,7 +91,7 @@ class UCFSports(DatasetLoader):
 
                         self._data["bboxes"][cur_id] = np.array(
                             self._data["bboxes"][cur_id])
-                        self._data["image_names"][cur_id].sort()
+                        self._data["image-filenames"][cur_id].sort()
                         video_id = int(video_id) + 1
                         video_id = "0" * (3 -
                                           len(str(video_id))) + str(video_id)

@@ -1,1 +1,1 @@
-
+DS_PATH = "../../datasets"

@@ -17,35 +17,33 @@ class LSP(DatasetLoader):
         "left shoulder", "left elbow", "left wrist", "neck", "head top"
     ]
 
-    def __init__(self, base_folder, small=False):
+    def __init__(self, base_folder):
         """
         Parameters
         ----------
         base_folder : string
             folder with dataset on disk
-        small: bool, optional (default is False)
-            If true load the small, readily cropped images and corresponding
-            keypoints.
         """
         super().__init__()
         # lists to hold all information contained in the dataset
-        self._data = {"filenames": [], "keypoints": []}
+        self._data = {"image-filenames": [], "keypoints": []}
         # describe the dataset split, containing the ids of elements in the
         # respective sets
-        self._trainingset = [i for i in range(1000)]
-        self._testset = [i for i in range(1000, 2000)]
+        self._splits = {
+            "default": {
+                "train": [i for i in range(1000)],
+                "test": [i for i in range(1000, 2000)]
+            }
+        }
+        self._default_split = "default"
         self._length = 2000
 
-        filename_tail = ""
-        if small:
-            filename_tail = "_small"
-        raw_data = loadmat(
-            os.path.join(base_folder, "joints" + filename_tail + ".mat"))
+        raw_data = loadmat(os.path.join(base_folder, "joints.mat"))
         self._data["keypoints"] = np.transpose(raw_data['joints'])
         for i in trange(0, 2000):
-            self._data["filenames"].append(
+            self._data["image-filenames"].append(
                 os.path.join(
-                    base_folder, "images" + filename_tail, "im" +
+                    base_folder, "images", "im" +
                     ("0" * (4 - len(str(i + 1)))) + str(i + 1) + ".jpg"))
 
-        self._data["filenames"] = np.array(self._data["filenames"])
+        self._data["image-filenames"] = np.array(self._data["image-filenames"])

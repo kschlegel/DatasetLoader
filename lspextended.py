@@ -33,9 +33,10 @@ class LSPExtended(DatasetLoader):
         """
         super().__init__()
         # lists to hold all information contained in the dataset
-        self._data = {"filenames": [], "keypoints": []}
+        self._data = {"image-filenames": [], "keypoints": []}
         # lsp extended doesn't have a split, it was only used to increase
         # the trainingset size of lsp
+        self._splits = None
         if improved:
             self._length = 9428
         else:
@@ -55,6 +56,6 @@ class LSPExtended(DatasetLoader):
                     continue
             else:
                 filename += ".jpg"
-            self._data["filenames"].append(filename)
+            self._data["image-filenames"].append(filename)
 
-        self._data["filenames"] = np.array(self._data["filenames"])
+        self._data["image-filenames"] = np.array(self._data["image-filenames"])
