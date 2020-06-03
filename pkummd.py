@@ -33,7 +33,7 @@ class PKUMMD(DatasetLoader):
     ]
     landmarks = []
 
-    def __init__(self, base_dir, load_skeletons=True, single_person=False):
+    def __init__(self, base_dir, load_skeletons=True, single_person=False, include_missing=True):
         """
         Parameters
         ----------
@@ -73,12 +73,14 @@ class PKUMMD(DatasetLoader):
         }
         self._default_split = "cross-subject"
 
+        self._single_person = single_person
+        self._include_missing = include_missing
+
         filename_list = []
         for filename in os.listdir(os.path.join(base_dir, "Label")):
             filename = filename[:-4]
             # store the short sequence names here to easily match for ids when
             # loading the splits later
-            self._single_person = single_person
 
             # load skeleton data if requested
             if load_skeletons:
@@ -110,6 +112,9 @@ class PKUMMD(DatasetLoader):
                     # Action classes are 1-labelled in the file, 0-labelled in
                     # the array => subtract 1
                     data[0] -= 1
+                    # Correct order errors in the label file
+                    if data[1] > data[2]:
+                        data[1], data[2] = data[2], data[1]
                     actions.append(data)
                 self._data["actions"].append(np.array(actions))
 
@@ -161,13 +166,21 @@ class PKUMMD(DatasetLoader):
             for l in f:
                 raw_kp = np.array(list(map(float, l.strip().split(" "))))
                 frame = []
+                if self._single_person:
+                    num_people = 0
                 for i in range(2):
                     # single person videos are zero buffered, and sometimes
                     # there are no skeletons at all in a frame
-                    if np.count_nonzero(raw_kp[i * 75:(i + 1) * 75]) > 0:
+                    has_data = np.count_nonzero(raw_kp[i * 75:(i + 1) * 75]) > 0
+                    if self._include_missing or has_data:
                         frame.append(raw_kp[i * 75:(i + 1) * 75].reshape(
                             25, 3))
-                if self._single_person and len(frame) > 1:
-                    return None
-            keypoints.append(np.array(frame))
+                        if self._single_person and has_data:
+                            num_people += 1
+                if self._single_person:
+                    if num_people > 1:
+                        return None
+                    elif self._include_missing:
+                        frame = frame[0]
+                keypoints.append(np.array(frame))
         return np.array(keypoints)
