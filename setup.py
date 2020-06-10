@@ -10,9 +10,9 @@ setup(
     packages=find_packages(),
     python_requires='>=3.6',
     install_requires=[
-        'numpy',
-        'tqdm',
-        'scipy',
-        'h5py'
+        'numpy>=1.18.5',
+        'tqdm>=4.46.1',
+        'scipy>=1.4.1',
+        'h5py>=2.10.0'
     ],
 )
