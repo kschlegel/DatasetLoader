@@ -24,6 +24,13 @@ class JHMDB(DatasetLoader):
         "left knee", "right wrist", "left wrist", "right ankle", "left ankle"
     ]
 
+    # Imagine the person standing on a compass, facing south. The viewpoint
+    # string describes where the camera is located.
+    viewpoints = [
+        "E", "ENE", "ESE", "N", "NE", "NNE", "NNW", "NW", "S", "SE", "SSE",
+        "SSW", "SW", "W", "WNW", "WSW"
+    ]
+
     def __init__(self, base_folder, full_body_split=False):
         """
         Parameters
@@ -37,6 +44,7 @@ class JHMDB(DatasetLoader):
         # lists to hold all information contained in the dataset
         self._data = {
             "video-filenames": [],
+            "viewpoints": [],
             "keypoints": [],
             "actions": [],
             "scales": []
@@ -62,6 +70,8 @@ class JHMDB(DatasetLoader):
                     mat = loadmat(
                         os.path.join(base_folder, "joint_positions", cls,
                                      filename[:-4], "joint_positions.mat"))
+                    self._data["viewpoints"].append(
+                        JHMDB.viewpoints.index(mat["viewpoint"][0]))
                     self._data["keypoints"].append(np.transpose(
                         mat["pos_img"]))
                     self._data["actions"].append(cls_id)
