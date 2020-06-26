@@ -2,7 +2,7 @@ import os.path
 import numpy as np
 import pytest
 
-from .. import HARPET
+from datasetloader import HARPET
 
 from . import DS_PATH
 

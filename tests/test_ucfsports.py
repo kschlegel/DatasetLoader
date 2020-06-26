@@ -1,7 +1,7 @@
 import os.path
 import numpy as np
 
-from .. import UCFSports
+from datasetloader import UCFSports
 
 from . import DS_PATH
 
@@ -14,7 +14,7 @@ class TestUCFSports():
         assert ucf.get_data("viewpoints").shape == (150, )
 
         expected_counts = [14, 18, 20, 6, 12, 13, 12, 20, 13, 22]
-        counts = np.bincount(ucf.get_data("actions"))
+        counts = np.bincount(ucf.get_data("actions").astype(int))
         for cls_id in range(10):
             assert expected_counts[cls_id] == counts[cls_id]
 

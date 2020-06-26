@@ -1,6 +1,6 @@
 import os.path
 
-from .. import PKUMMD
+from datasetloader import PKUMMD
 
 from . import DS_PATH
 

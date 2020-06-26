@@ -97,4 +97,4 @@ class UCFSports(DatasetLoader):
                                           len(str(video_id))) + str(video_id)
 
         for key in self._data.keys():
-            self._data[key] = np.array(self._data[key])
+            self._data[key] = np.array(self._data[key], dtype=object)

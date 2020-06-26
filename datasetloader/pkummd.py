@@ -33,7 +33,11 @@ class PKUMMD(DatasetLoader):
     ]
     landmarks = []
 
-    def __init__(self, base_dir, load_skeletons=True, single_person=False, include_missing=True):
+    def __init__(self,
+                 base_dir,
+                 load_skeletons=True,
+                 single_person=False,
+                 include_missing=True):
         """
         Parameters
         ----------
@@ -146,7 +150,7 @@ class PKUMMD(DatasetLoader):
                     self._splits[split]["test"].append(i)
 
         for key in self._data.keys():
-            self._data[key] = np.array(self._data[key])
+            self._data[key] = np.array(self._data[key], dtype=object)
 
     def load_keypointfile(self, filename):
         """
@@ -171,7 +175,8 @@ class PKUMMD(DatasetLoader):
                 for i in range(2):
                     # single person videos are zero buffered, and sometimes
                     # there are no skeletons at all in a frame
-                    has_data = np.count_nonzero(raw_kp[i * 75:(i + 1) * 75]) > 0
+                    has_data = np.count_nonzero(
+                        raw_kp[i * 75:(i + 1) * 75]) > 0
                     if self._include_missing or has_data:
                         frame.append(raw_kp[i * 75:(i + 1) * 75].reshape(
                             25, 3))

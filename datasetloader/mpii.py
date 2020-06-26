@@ -165,4 +165,4 @@ class MPII(DatasetLoader):
             self._data["head_bboxes"].append(np.array(head_bboxes))
             self._length += 1
         for key in self._data.keys():
-            self._data[key] = np.array(self._data[key])
+            self._data[key] = np.array(self._data[key], dtype=object)

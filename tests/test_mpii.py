@@ -1,6 +1,6 @@
 import os.path
 
-from .. import MPII
+from datasetloader import MPII
 
 from . import DS_PATH
 

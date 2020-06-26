@@ -96,4 +96,4 @@ class JHMDB(DatasetLoader):
                                         self._splits[split]["test"].append(i)
 
         for key in self._data.keys():
-            self._data[key] = np.array(self._data[key])
+            self._data[key] = np.array(self._data[key], dtype=object)

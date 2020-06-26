@@ -1,8 +1,8 @@
 import os.path
 import pytest
 
-from .. import LSP
-from .. import LSPExtended
+from datasetloader import LSP
+from datasetloader import LSPExtended
 
 from . import DS_PATH
 

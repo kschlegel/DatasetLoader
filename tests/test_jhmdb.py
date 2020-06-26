@@ -1,7 +1,7 @@
 import os.path
 import numpy as np
 
-from .. import JHMDB
+from datasetloader import JHMDB
 
 from . import DS_PATH
 
@@ -26,7 +26,7 @@ class TestJHMDB():
         # check we got the correct first element
         assert keypoints.shape[1:] == (15, 2)
         assert len(scale.shape) == 1
-        assert isinstance(action, np.int64)
+        assert isinstance(action, int)
         assert action >= 0
         assert action < 21
 
