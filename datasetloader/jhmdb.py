@@ -51,8 +51,8 @@ class JHMDB(DatasetLoader):
         }
         # describe the dataset split, containing the ids of elements in the
         # respective sets
-        self._splits = {i: {"train": [], "test": []} for i in range(1, 4)}
-        self._default_split = 1
+        self._splits = {str(i): {"train": [], "test": []} for i in range(1, 4)}
+        self._default_split = '1'
 
         if full_body_split:
             split_filename = "_test_split_"

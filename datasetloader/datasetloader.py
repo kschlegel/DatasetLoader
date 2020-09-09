@@ -22,6 +22,21 @@ class DatasetLoader():
         """
         return (data_key in self._data)
 
+    def get_traintest_split(self, split):
+        """
+        Returns a tuple with the lists of the training and testset ids.
+
+        Parameters
+        ----------
+        split : string, optional (default is 'default')
+            if the dataset definition includes splits into training and test
+            set query the train and testset ids of this split. Valid split 
+            names depend on the dataset.
+        """
+        train_ids = self._get_index_set("train", split)
+        test_ids = self._get_index_set("test", split)
+        return (train_ids, test_ids)
+    
     def get_data(self, data_keys, subset="all", split="default"):
         """
         Returns a list of the data.
