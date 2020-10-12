@@ -31,11 +31,24 @@ class PKUMMD(DatasetLoader):
         "use a fan (with hand or paper)/feeling warm", "wear jacket",
         "wear on glasses", "wipe face", "writing"
     ]
-    landmarks = []
+    interactions = [
+        "giving something to other person", "handshaking",
+        "hugging other person", "kicking other person",
+        "pat on back of other person", "point finger at the other person",
+        "punching/slapping other person", "pushing other person"
+    ]
+    landmarks = [
+        "pelvis", "spine mid", "neck", "head top", "left shoulder",
+        "left elbow", "left wrist", "left hand", "right shoulder",
+        "right elbow", "right wrist", "right hand", "left hip", "left knee",
+        "left ankle", "left foot", "right hip", "right knee", "right ankle",
+        "right foot", "spine shoulder", "left handtip", "left thumb",
+        "right handtip", "right thumb"
+    ]
 
     def __init__(self,
                  base_dir,
-                 load_skeletons=True,
+                 lazy_loading=True,
                  single_person=False,
                  include_missing=True):
         """
@@ -43,25 +56,34 @@ class PKUMMD(DatasetLoader):
         ----------
         base_folder : string
             folder with dataset on disk
-        load_skeletons : bool, optional (default is True)
-            This dataset is large so that on machines with not a lot of memory
-            it might not be feasible to hold all skeletons in memory. Set t his
-            to false to no load all skeleton sequences immediately.
+        lazy_loading : bool, optional (default is True)
+            Only load individual data items when queried
         single_person : bool, optional (default is False)
             If true only load sequences with a single actor (either at init
             time if load_skeletons is True or at access time when calling
             load_keypointfile if load_skeletons is False)
+        include_missing : bool, optional (default is True)
+            If True missing skeletons are returned as zero-vectors of the same
+            shape as a skeleton. If False missing skeletons are returned as an
+            empty list.
         """
-        super().__init__()
-        # lists to hold all information contained in the dataset
-        # TODO: the dataset got more information, include more?
+        self._data_cols = [
+            "video-filename",
+            "skeleton-filename",
+            "action-filename",
+            "keypoints3D",
+            "actions",
+            # The dataset also contains these, to be implemented if/when needed
+            # "ir-filenames",
+            # "depth-filenames",
+        ]
         self._data = {
-            "video-filenames": [],
-            "skeleton-filenames": [],
-            "ir-filenames": [],
-            "depth-filenames": [],
-            "keypoints": [],
-            "actions": []
+            "video-filename": [],
+            "skeleton-filename": [],
+            "action-filename": [],
+            # The dataset also contains these, to be implemented if/when needed
+            # "ir-filenames": [],
+            # "depth-filenames": [],
         }
         # describe the dataset split, containing the ids of elements in the
         # respective sets
@@ -75,62 +97,53 @@ class PKUMMD(DatasetLoader):
                 "test": []
             }
         }
-        self._default_split = "cross-subject"
 
         self._single_person = single_person
         self._include_missing = include_missing
 
+        self._length = 0
         filename_list = []
+        if single_person:
+            interaction_ids = set([
+                PKUMMD.actions.index(interaction)
+                for interaction in PKUMMD.interactions
+            ])
         for filename in os.listdir(os.path.join(base_dir, "Label")):
             filename = filename[:-4]
-            # store the short sequence names here to easily match for ids when
-            # loading the splits later
 
-            # load skeleton data if requested
-            if load_skeletons:
-                keypoints = self.load_keypointfile(
-                    os.path.join(base_dir, "Data", "SKELETON_VIDEO",
-                                 filename + ".txt"))
-                # load_keypointfile returns None if single_person is True and
-                # the given file contains at least one frame with more than one
-                # person => skip this one
-                if keypoints is None:
-                    continue
-                self._data["keypoints"].append(keypoints)
-            # Add the skeleton filename (whether we just loaded them or not)
-            self._data["skeleton-filenames"].append(
+            # the label files are the easiest ones, use these to check at init
+            # time which of the sequences are single person if the dataset is
+            # to be restricted to single person
+            if single_person:
+                with open(os.path.join(base_dir, "Label", filename + ".txt"),
+                          "r") as f:
+                    action_ids = []
+                    for l in f:
+                        # Action class ids are one-based in the file
+                        action_ids.append(int(l[:l.find(",")]) - 1)
+                    if len(interaction_ids.intersection(action_ids)) == len(
+                            action_ids):
+                        # this is a sequence with 2 persons, skip
+                        # TODO: action 17 and 20 occasionally occur as actions
+                        # in single person sequences, should maybe fix that
+                        continue
+
+            # store short filename for easier identification for split info
+            filename_list.append(filename)
+            self._data["skeleton-filename"].append(
                 os.path.join(base_dir, "Data", "SKELETON_VIDEO",
                              filename + ".txt"))
-
-            # At this point we know if an item is skipped or not, set all
-            # general info vars
-            filename_list.append(filename)
-            self._length += 1
-
-            # load action data
-            with open(os.path.join(base_dir, "Label", filename + ".txt"),
-                      "r") as f:
-                actions = []
-                for l in f:
-                    data = list(map(int, l.split(",")[0:3]))
-                    # Action classes are 1-labelled in the file, 0-labelled in
-                    # the array => subtract 1
-                    data[0] -= 1
-                    # Correct order errors in the label file
-                    if data[1] > data[2]:
-                        data[1], data[2] = data[2], data[1]
-                    actions.append(data)
-                self._data["actions"].append(np.array(actions))
-
-            # fill in filenames for all types of video data
-            self._data["video-filenames"].append(
+            self._data["action-filename"].append(
+                os.path.join(base_dir, "Label", filename + ".txt"))
+            self._data["video-filename"].append(
                 os.path.join(base_dir, "Data", "RGB_VIDEO", filename + ".avi"))
-            self._data["ir-filenames"].append(
-                os.path.join(base_dir, "Data", "IR_VIDEO",
-                             filename + "-infrared.avi"))
-            self._data["depth-filenames"].append(
-                os.path.join(base_dir, "Data", "DEPTH_VIDEO",
-                             filename + "-depth.avi"))
+            # self._data["ir-filenames"].append(
+            #     os.path.join(base_dir, "Data", "IR_VIDEO",
+            #                  filename + "-infrared.avi"))
+            # self._data["depth-filenames"].append(
+            #     os.path.join(base_dir, "Data", "DEPTH_VIDEO",
+            #                  filename + "-depth.avi"))
+            self._length += 1
 
         # Load splits information
         for split in self._splits.keys():
@@ -140,17 +153,19 @@ class PKUMMD(DatasetLoader):
                 line = f.readline()
                 trainingset = line[:line.rfind(",")].split(", ")
                 for filename in trainingset:
-                    i = filename_list.index(filename)
-                    self._splits[split]["train"].append(i)
+                    for i, sample_file in enumerate(filename_list):
+                        if filename == sample_file:
+                            self._splits[split]["train"].append(i)
+                            break
                 f.readline()  # Dump the "Validation videos:" headline
                 line = f.readline()
                 testset = line[:line.rfind(",")].split(", ")
                 for filename in testset:
-                    i = filename_list.index(filename)
-                    self._splits[split]["test"].append(i)
+                    if filename == sample_file:
+                        self._splits[split]["test"].append(i)
+                        break
 
-        for key in self._data.keys():
-            self._data[key] = np.array(self._data[key], dtype=object)
+        super().__init__(lazy_loading)
 
     def load_keypointfile(self, filename):
         """
@@ -189,3 +204,44 @@ class PKUMMD(DatasetLoader):
                         frame = frame[0]
                 keypoints.append(np.array(frame))
         return np.array(keypoints)
+
+    def load_actionfile(self, filename):
+        """
+        Load the actions with timestamps from the given file.
+
+        Parameters
+        ----------
+        filename : string
+            Filename of the file containing the action data.
+        """
+        with open(filename, "r") as f:
+            actions = []
+            for l in f:
+                action_data = list(map(int, l.split(",")[0:3]))
+                # Action class ids are one-based in the file
+                action_data[0] -= 1
+                # Correct occasional order errors in the label file
+                if action_data[1] > action_data[2]:
+                    action_data[1], action_data[2] = action_data[
+                        2], action_data[1]
+                actions.append(action_data)
+        return actions
+
+    def __getitem__(self, index):
+        """
+        Indexing access to the dataset.
+
+        Returns a dictionary of all currently selected data columns of the
+        selected item.
+        """
+        data = super().__getitem__(index)
+        # super() provides all non-lazy access, only need to do more for data
+        # that hasn't been loaded previously
+        if len(self._selected_cols - data.keys()) > 0:
+            if "keypoints3D" in self._selected_cols:
+                data["keypoints3D"] = self.load_keypointfile(
+                    self._data["skeleton-filename"][index])
+            if "actions" in self._selected_cols:
+                data["actions"] = self.load_actionfile(
+                    self._data["action-filename"][index])
+        return data

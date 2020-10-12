@@ -1,117 +1,146 @@
-class DatasetLoader():
+from abc import ABC
+
+
+class DatasetLoader(ABC):
     """
     Base class for all dataset loaders to provide a common interface for
     retrieving the data out of the dataset object.
     """
-    def __init__(self):
-        # Different datasets will have different elements so safer to keep
-        # track of length rather than checking the length of any given list
-        self._length = 0
+    def __init__(self, lazy_loading):
+        self._selected_cols = []
+        self._lazy = lazy_loading
+        if not self._lazy:
+            self._load_all()
 
-    def has_attribute(self, data_key):
+    def __len__(self):
+        return self._length
+
+    def set_cols(self, *args):
+        """
+        Sets the data columns to be returned on query.
+
+        Overwrites any previous selection.
+
+        Parameters
+        ----------
+        strings of data columns to be used.
+        """
+        for data_key in args:
+            if data_key not in self._data_cols:
+                raise KeyError("This dataset does not have '" + data_key +
+                               "'information.")
+        self._selected_cols = list(args)
+
+    def select_col(self, col):
+        """
+        Add the given column to the list of data returned on query.
+
+        Parameters
+        ----------
+        col : string
+            Name of the data column to be selected
+        """
+        if col not in self._data_cols:
+            raise KeyError("This dataset does not have '" + col +
+                           "'information.")
+        if col not in self._selected_cols:
+            self._selected_cols.append(col)
+
+    def deselect_col(self, col):
+        """
+        Remove the given column from the list of data returned on query.
+
+        Parameters
+        ----------
+        col : string
+            Name of the data column to be removed from the selection.
+        """
+        if col in self._selected_cols:
+            self._selected_cols.remove(col)
+
+    def has_col(self, col):
         """
         Check whether the dataset has the given type of data.
 
-        Pass in a string key to check its validity for use as key in the
-        get_data and get_iterator methods.
+        Pass in a string key to check its validity for use as key to query
+        data.
 
         Parameters
         ----------
-        data_key : string
-            key to be checked
+        col : string
+            Name of the data column to be checked
         """
-        return (data_key in self._data)
+        return (col in self._data_cols)
 
-    def get_data(self, data_keys, subset="all", split="default"):
+    def __getitem__(self, index):
         """
-        Returns a list of the data.
+        Indexing access to the dataset.
 
-        Returns a list of the data of either the full dataset or the requested
-        subset) of the requested data keys.
+        Provides the non-lazy access only. Any dataset to offer lazy access
+        must implement the lazy access for any lazy parts manually.
+        """
+        return {
+            data_key: self._data[data_key][index]
+            for data_key in self._selected_cols if data_key in self._data
+        }
+
+    def iterate(self, split_name=None, split=None):
+        """
+        Iterate over the dataset or a subset of it.
 
         Parameters
         ----------
-        data_keys : string or tuple/list of strings
-            either a string or tuple/list of keys into the data_dict to
+        split_name : string, optional
+            If given and split is given iterate over the specified data subset
+            (if it exists). If None, iterate over the whole dataset.
+        split_name : string, optional
+            One of {train, valid, test} If given and split_name is given
+            iterate over the specified data subset (if it exists). If None,
+            iterate over the whole dataset.
+        """
+        if split_name is not None and split is not None:
+            index_list = self.get_split(split_name, split)
+        else:
+            index_list = range(len(self))
+        for i in index_list:
+            yield self[i]
+
+    def get_split(self, split_name, split):
+        """
+        Get indices of elements belonging to a given dataset split.
+
+        Parameters
+        ----------
+        split_name : string
+            Name identifying the dataset split to be returned.
+        split_name : string
+            One of {train, valid, test}. The datasubset of the given split to
             be returned.
-        subset : string, optional (default is 'all')
-            One of {‘train’, ‘valid’, ‘test’, ‘all’}. Some
-            datasets may not have a pre-defined split, an exception will be
-            raised when trying to get a subset set which doesn't exist.
-        split : string, optional (default is 'default')
-            if the dataset definition includes splits into training, test and
-            possibly validation set, the split can be chosen using this
-            parameter. Valid split names depend on the dataset.
         """
-        data_keys = self._check_keys(data_keys)
-        if subset == "all":
-            if len(data_keys) == 1:
-                return self._data[data_keys[0]]
-            else:
-                return [self._data[key] for key in data_keys]
-        else:
-            index_set = self._get_index_set(subset, split)
+        if split_name not in self._splits:
+            raise KeyError("This dataset has no split '" + split_name + "'!")
+        if split not in self._splits[split_name]:
+            raise KeyError("The split '" + split_name +
+                           "' doesn't have a subset " + split)
+        return self._splits[split_name][split]
 
-        if len(data_keys) == 1:
-            return self._data[data_keys[0]][index_set]
-        else:
-            return [self._data[key][index_set] for key in data_keys]
-
-    def get_iterator(self, data_keys, subset="all", split="default"):
+    def _load_all(self):
         """
-        Returns an iterator over the data.
-
-        Returns an iterator over either the full dataset or the requested
-        subset) of the requested data keys.
-
-        Parameters
-        ----------
-        data_keys : string or tuple/list of strings
-            either a string or tuple/list of keys into the data_dict to
-            be returned.
-        subset : string, optional (default is 'all')
-            One of {‘train’, ‘valid’, ‘test’, ‘all’}. Some
-            datasets may not have a pre-defined split, an exception will be
-            raised when trying to get a subset set which doesn't exist.
-        split : string, optional (default is 'default')
-            if the dataset definition includes splits into training, test and
-            possibly validation set, the split can be chosen using this
-            parameter. Valid split names depend on the dataset.
+        Helper for easy non-lazy loading of datasets which do offer lazy
+        loading.
         """
-        data_keys = self._check_keys(data_keys)
-
-        if subset == "all":
-            index_set = [i for i in range(self._length)]
-        else:
-            index_set = self._get_index_set(subset, split)
-
-        for i in index_set:
-            if len(data_keys) == 1:
-                yield self._data[data_keys[0]][i]
-            else:
-                yield [self._data[key][i] for key in data_keys]
-
-    def _check_keys(self, data_keys):
-        if not isinstance(data_keys, (tuple, list)):
-            data_keys = (data_keys, )
-        for key in data_keys:
-            if key not in self._data:
-                raise Exception("The dataset '" + str(self.__class__) +
-                                "' does not contain '" + key +
-                                "' information!")
-        return data_keys
-
-    def _get_index_set(self, subset, split):
-        if self._splits is not None:
-            if split == "default":
-                split = self._default_split
-            if split not in self._splits:
-                raise Exception(split +
-                                " is not a valid split name for this dataset.")
-
-            if subset in self._splits[split]:
-                return self._splits[split][subset]
-            else:
-                raise Exception(" This dataset has no " + subset + " subset.")
-        else:
-            raise Exception("This dataset doesn't have any splits.")
+        select_cols = self._selected_cols
+        self._selected_cols = []
+        data = {}
+        for col in self._data_cols:
+            if col not in self._data.keys():
+                self._selected_cols.append(col)
+                data[col] = []
+        if len(self._selected_cols) > 0:
+            for i in range(len(self)):
+                sample = self[i]
+                for col in self._selected_cols:
+                    data[col].append(sample[col])
+        for key, val in data.items():
+            self._data[key] = val
+        self._selected_cols = select_cols
