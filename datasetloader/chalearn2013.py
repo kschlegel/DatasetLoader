@@ -28,7 +28,7 @@ class ChaLearn2013(DatasetLoader):
         """
         Parameters
         ----------
-        base_folder : string
+        base_dir : string
             folder with dataset on disk
         lazy_loading : bool, optional (default is True)
             Only load individual data items when queried
@@ -43,7 +43,7 @@ class ChaLearn2013(DatasetLoader):
             # "rotations",
             # "depth-filenames",
             # "audio-filenames",
-            # "mask-filenames"
+            # "mask-filenames",
         ]
         self._data = {
             "video-filename": [],
@@ -51,7 +51,7 @@ class ChaLearn2013(DatasetLoader):
             # The dataset also contains these, to be implemented if/when needed
             # "depth-filenames": [],
             # "audio-filenames": [],
-            # "mask-filenames": []
+            # "mask-filenames": [],
         }
         # describe the dataset split, containing the ids of elements in the
         # respective sets

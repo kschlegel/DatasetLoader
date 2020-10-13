@@ -54,7 +54,7 @@ class PKUMMD(DatasetLoader):
         """
         Parameters
         ----------
-        base_folder : string
+        base_dir : string
             folder with dataset on disk
         lazy_loading : bool, optional (default is True)
             Only load individual data items when queried
@@ -69,7 +69,7 @@ class PKUMMD(DatasetLoader):
         """
         self._data_cols = [
             "video-filename",
-            "skeleton-filename",
+            "keypoint-filename",
             "action-filename",
             "keypoints3D",
             "actions",
@@ -79,7 +79,7 @@ class PKUMMD(DatasetLoader):
         ]
         self._data = {
             "video-filename": [],
-            "skeleton-filename": [],
+            "keypoint-filename": [],
             "action-filename": [],
             # The dataset also contains these, to be implemented if/when needed
             # "ir-filenames": [],
@@ -130,7 +130,7 @@ class PKUMMD(DatasetLoader):
 
             # store short filename for easier identification for split info
             filename_list.append(filename)
-            self._data["skeleton-filename"].append(
+            self._data["keypoint-filename"].append(
                 os.path.join(base_dir, "Data", "SKELETON_VIDEO",
                              filename + ".txt"))
             self._data["action-filename"].append(
@@ -240,7 +240,7 @@ class PKUMMD(DatasetLoader):
         if len(self._selected_cols - data.keys()) > 0:
             if "keypoints3D" in self._selected_cols:
                 data["keypoints3D"] = self.load_keypointfile(
-                    self._data["skeleton-filename"][index])
+                    self._data["keypoint-filename"][index])
             if "actions" in self._selected_cols:
                 data["actions"] = self.load_actionfile(
                     self._data["action-filename"][index])

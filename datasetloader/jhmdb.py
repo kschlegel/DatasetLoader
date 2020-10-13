@@ -31,29 +31,27 @@ class JHMDB(DatasetLoader):
         "SSW", "SW", "W", "WNW", "WSW"
     ]
 
-    def __init__(self, base_folder, full_body_split=False):
+    def __init__(self, base_dir, lazy_loading=True, full_body_split=False):
         """
         Parameters
         ----------
-        base_folder : string
+        base_dir : string
             folder with dataset on disk
         full_body_split : bool, optional (default is False)
             Load only subset with full body visible if True
         """
-        super().__init__()
-        # lists to hold all information contained in the dataset
+        self._data_cols = [
+            "video-filename", "data-filename", "viewpoint", "keypoints2D",
+            "action", "scales"
+        ]
         self._data = {
-            "video-filenames": [],
-            "viewpoints": [],
-            "keypoints": [],
-            "actions": [],
-            "scales": []
+            "video-filename": [],
+            "data-filename": [],
+            "action": [],
         }
-        # describe the dataset split, containing the ids of elements in the
-        # respective sets
         self._splits = {i: {"train": [], "test": []} for i in range(1, 4)}
-        self._default_split = 1
 
+        self._length = 0
         if full_body_split:
             split_filename = "_test_split_"
             split_folder = "sub_splits"
@@ -62,25 +60,19 @@ class JHMDB(DatasetLoader):
             split_folder = "splits"
         for cls_id, cls in tqdm(enumerate(JHMDB.actions)):
             # load dat for this class
-            for filename in os.listdir(os.path.join(base_folder, "videos",
-                                                    cls)):
+            for filename in os.listdir(os.path.join(base_dir, "videos", cls)):
                 if filename.endswith(".avi"):
-                    self._data["video-filenames"].append(
-                        os.path.join(base_folder, "videos", cls, filename))
-                    mat = loadmat(
-                        os.path.join(base_folder, "joint_positions", cls,
+                    self._data["video-filename"].append(
+                        os.path.join(base_dir, "videos", cls, filename))
+                    self._data["data-filename"].append(
+                        os.path.join(base_dir, "joint_positions", cls,
                                      filename[:-4], "joint_positions.mat"))
-                    self._data["viewpoints"].append(
-                        JHMDB.viewpoints.index(mat["viewpoint"][0]))
-                    self._data["keypoints"].append(np.transpose(
-                        mat["pos_img"]))
-                    self._data["actions"].append(cls_id)
-                    self._data["scales"].append(mat["scale"][0])
+                    self._data["action"].append(cls_id)
                     self._length += 1
             # load splits  information for this class
             for split in self._splits.keys():
                 split_file = os.path.join(
-                    base_folder, split_folder,
+                    base_dir, split_folder,
                     cls + split_filename + str(split) + ".txt")
                 if os.path.exists(split_file):
                     with open(split_file, 'r') as f:
@@ -88,12 +80,48 @@ class JHMDB(DatasetLoader):
                             line = line.strip()
                             seq_name = line[:line.find(".avi") + 4]
                             for i, filename in enumerate(
-                                    self._data["video-filenames"]):
+                                    self._data["video-filename"]):
                                 if filename.endswith(os.path.sep + seq_name):
                                     if line[-1] == "1":
                                         self._splits[split]["train"].append(i)
                                     else:
                                         self._splits[split]["test"].append(i)
+        super().__init__(lazy_loading)
 
-        for key in self._data.keys():
-            self._data[key] = np.array(self._data[key], dtype=object)
+    def load_datafile(self, filename):
+        """
+        Load the complex data of the dataset.
+
+        Loads all that is currently selected of skeletons, viewpoint and
+        scales.
+
+        Parameters
+        ----------
+        filename : string
+            Filename of the file containing the data.
+        """
+        mat = loadmat(filename)
+        data = {}
+        if "keypoints2D" in self._selected_cols:
+            data["keypoints2D"] = np.transpose(mat["pos_img"])
+        if "viewpoint" in self._selected_cols:
+            data["viewpoint"] = JHMDB.viewpoints.index(mat["viewpoint"][0])
+        if "scales" in self._selected_cols:
+            data["scales"] = mat["scale"][0]
+        return data
+
+    def __getitem__(self, index):
+        """
+        Indexing access to the dataset.
+
+        Returns a dictionary of all currently selected data columns of the
+        selected item.
+        """
+        data = super().__getitem__(index)
+        # super() provides all non-lazy access, only need to do more for data
+        # that hasn't been loaded previously
+        if len(self._selected_cols - data.keys()) > 0:
+            lazy_data = self.load_datafile(self._data["data-filename"][index])
+            for col, val in lazy_data.items():
+                data[col] = val
+        return data
