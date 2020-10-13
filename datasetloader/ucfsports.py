@@ -16,29 +16,35 @@ class UCFSports(DatasetLoader):
         "SkateBoarding", "Swing-Bench", "Swing-Side", "Walk"
     ]
 
-    def __init__(self, base_folder):
+    def __init__(self, base_dir):
         """
         Parameters
         ----------
-        base_folder : string
+        base_dir : string
             folder with dataset on disk
         """
-        super().__init__()
+        self._data_cols = [
+            "video-filename", "image-filenames", "bboxes", "action",
+            "viewpoint"
+        ]
         self._data = {
-            "video-filenames": [],
+            "video-filename": [],
             "image-filenames": [],
             "bboxes": [],
-            "actions": [],
-            "viewpoints": []
+            "action": [],
+            "viewpoint": []
         }
         # Leave-One-Out cross validation recommended for action recognition
         # Add Action localisation split here for completeness?
         self._splits = None
 
+        super().__init__(lazy_loading=False)
+
+        self._length = 0
         viewpoints = ("", "-Front", "-Side", "-Back", "Angle")
         for cls_id, cls in tqdm(enumerate(UCFSports.classes)):
             for vp in viewpoints:
-                cls_folder = os.path.join(base_folder, "ucf action", cls + vp)
+                cls_folder = os.path.join(base_dir, "ucf action", cls + vp)
                 if os.path.exists(cls_folder):
                     video_id = "001"
                     while os.path.exists(os.path.join(cls_folder, video_id)):
@@ -48,19 +54,19 @@ class UCFSports(DatasetLoader):
                         # doesn't exist and should be set to blank in those
                         # cases (this can be fixed with a script from this
                         # package)
-                        self._data["video-filenames"].append("")
-                        self._data["actions"].append(cls_id)
+                        self._data["video-filename"].append("")
+                        self._data["action"].append(cls_id)
                         self._data["image-filenames"].append([])
                         self._data["bboxes"].append([])
                         if len(vp) > 0 and vp[0] == "-":
-                            self._data["viewpoints"].append(vp)
+                            self._data["viewpoint"].append(vp)
                         else:
-                            self._data["viewpoints"].append("")
+                            self._data["viewpoint"].append("")
                         filelist = sorted(
                             os.listdir(os.path.join(cls_folder, video_id)))
                         for filename in filelist:
                             if filename.endswith(".avi"):
-                                self._data["video-filenames"][
+                                self._data["video-filename"][
                                     cur_id] = os.path.join(
                                         cls_folder, video_id, filename)
                             elif filename.endswith(".jpg"):
