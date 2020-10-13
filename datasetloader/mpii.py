@@ -19,37 +19,38 @@ class MPII(DatasetLoader):
     ]
     reference_scale = 200
 
-    def __init__(self, base_folder, single_person=True):
+    def __init__(self, base_dir, single_person=True):
         """
         Parameters
         ----------
-        base_folder : string
+        base_dir : string
             folder with dataset on disk
         single_person : bool, optional (default is True)
             If true load the small, readily cropped images and corresponding
             keypoints.
         """
-        super().__init__()
-        # lists to hold all information contained in the dataset
+        self._data_cols = [
+            "image-filename", "keypoints2D", "scale", "centre", "head_bbox"
+        ]
         self._data = {
-            "image-filenames": [],
-            "keypoints": [],
-            "scales": [],
-            "centres": [],
-            "head_bboxes": []
+            "image-filename": [],
+            "keypoints2D": [],
+            "scale": [],
+            "centre": [],
+            "head_bbox": []
         }
-        # describe the dataset split, containing the ids of elements in the
-        # respective sets
         self._splits = {"default": {"train": [], "test": []}}
-        self._default_split = "default"
+
+        super().__init__(lazy_loading=False)
 
         print("Loading the data file. This may take a while...")
-        raw_data = loadmat(os.path.join(base_folder,
+        self._length = 0
+        raw_data = loadmat(os.path.join(base_dir,
                                         "mpii_human_pose_v1_u12_1.mat"),
                            struct_as_record=False,
                            squeeze_me=True)
-        for img_id, is_training in tqdm(
-                enumerate(raw_data["RELEASE"].img_train)):
+        for img_id, is_training in enumerate(
+                tqdm(raw_data["RELEASE"].img_train)):
             if single_person:
                 # single_person ids are 1-indexed, arrays are 0-indexed
                 # => need to subtract one
@@ -148,21 +149,23 @@ class MPII(DatasetLoader):
 
             # Save split information
             if is_training == 0:
-                self._splits[self._default_split]["test"].append(self._length)
+                if len(keypoints) == 0:
+                    continue
+                self._splits["default"]["test"].append(self._length)
             else:
                 if len(keypoints) == 0:
                     # sometimes for some reason there are images with not a
                     # single skeleton
                     continue
-                self._splits[self._default_split]["train"].append(self._length)
+                self._splits["default"]["train"].append(self._length)
 
-            self._data["image-filenames"].append(
-                os.path.join(base_folder, "images",
+            self._data["image-filename"].append(
+                os.path.join(base_dir, "images",
                              raw_data["RELEASE"].annolist[img_id].image.name))
-            self._data["keypoints"].append(np.array(keypoints))
-            self._data["centres"].append(np.array(centres))
-            self._data["scales"].append(np.array(scales))
-            self._data["head_bboxes"].append(np.array(head_bboxes))
+            self._data["keypoints2D"].append(np.array(keypoints))
+            self._data["centre"].append(np.array(centres))
+            self._data["scale"].append(np.array(scales))
+            self._data["head_bbox"].append(np.array(head_bboxes))
             self._length += 1
         for key in self._data.keys():
             self._data[key] = np.array(self._data[key], dtype=object)

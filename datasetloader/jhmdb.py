@@ -31,7 +31,7 @@ class JHMDB(DatasetLoader):
         "SSW", "SW", "W", "WNW", "WSW"
     ]
 
-    def __init__(self, base_dir, lazy_loading=True, full_body_split=False):
+    def __init__(self, base_dir, full_body_split=False, lazy_loading=True):
         """
         Parameters
         ----------

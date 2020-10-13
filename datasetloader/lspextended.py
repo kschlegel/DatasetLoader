@@ -19,11 +19,11 @@ class LSPExtended(DatasetLoader):
         "left shoulder", "left elbow", "left wrist", "neck", "head top"
     ]
 
-    def __init__(self, base_folder, improved=False):
+    def __init__(self, base_dir, improved=False):
         """
         Parameters
         ----------
-        base_folder : string
+        base_dir : string
             folder with dataset on disk
         improved : bool, optional (default is False)
             LSP extended has be re-annotated with higher quality labels and the
@@ -31,9 +31,8 @@ class LSPExtended(DatasetLoader):
             lsp extended dataset. If True load this new version of lsp
             extended.
         """
-        super().__init__()
-        # lists to hold all information contained in the dataset
-        self._data = {"image-filenames": [], "keypoints": []}
+        self._data_cols = ["image-filename", "keypoints2D"]
+        self._data = {"image-filename": [], "keypoints2D": []}
         # lsp extended doesn't have a split, it was only used to increase
         # the trainingset size of lsp
         self._splits = None
@@ -42,11 +41,13 @@ class LSPExtended(DatasetLoader):
         else:
             self._length = 10000
 
-        raw_data = loadmat(os.path.join(base_folder, "joints.mat"))
-        self._data["keypoints"] = np.transpose(raw_data['joints'], (2, 0, 1))
+        super().__init__(lazy_loading=False)
+
+        raw_data = loadmat(os.path.join(base_dir, "joints.mat"))
+        self._data["keypoints2D"] = np.transpose(raw_data['joints'], (2, 0, 1))
         for i in trange(0, 10000):
             filename = os.path.join(
-                base_folder, "images",
+                base_dir, "images",
                 "im" + ("0" * (5 - len(str(i + 1)))) + str(i + 1))
             if improved:
                 filename += ".png"
@@ -56,6 +57,6 @@ class LSPExtended(DatasetLoader):
                     continue
             else:
                 filename += ".jpg"
-            self._data["image-filenames"].append(filename)
+            self._data["image-filename"].append(filename)
 
-        self._data["image-filenames"] = np.array(self._data["image-filenames"])
+        self._data["image-filename"] = np.array(self._data["image-filename"])

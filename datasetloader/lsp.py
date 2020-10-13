@@ -17,33 +17,31 @@ class LSP(DatasetLoader):
         "left shoulder", "left elbow", "left wrist", "neck", "head top"
     ]
 
-    def __init__(self, base_folder):
+    def __init__(self, base_dir):
         """
         Parameters
         ----------
-        base_folder : string
+        base_dir : string
             folder with dataset on disk
         """
-        super().__init__()
-        # lists to hold all information contained in the dataset
-        self._data = {"image-filenames": [], "keypoints": []}
-        # describe the dataset split, containing the ids of elements in the
-        # respective sets
+        self._data_cols = ["image-filename", "keypoints2D"]
+        self._data = {"image-filename": [], "keypoints2D": []}
         self._splits = {
             "default": {
                 "train": [i for i in range(1000)],
                 "test": [i for i in range(1000, 2000)]
             }
         }
-        self._default_split = "default"
         self._length = 2000
 
-        raw_data = loadmat(os.path.join(base_folder, "joints.mat"))
-        self._data["keypoints"] = np.transpose(raw_data['joints'])
-        for i in trange(0, 2000):
-            self._data["image-filenames"].append(
-                os.path.join(
-                    base_folder, "images", "im" +
-                    ("0" * (4 - len(str(i + 1)))) + str(i + 1) + ".jpg"))
+        super().__init__(lazy_loading=False)
 
-        self._data["image-filenames"] = np.array(self._data["image-filenames"])
+        raw_data = loadmat(os.path.join(base_dir, "joints.mat"))
+        self._data["keypoints2D"] = np.transpose(raw_data['joints'])
+        for i in trange(0, 2000):
+            self._data["image-filename"].append(
+                os.path.join(
+                    base_dir, "images", "im" + ("0" * (4 - len(str(i + 1)))) +
+                    str(i + 1) + ".jpg"))
+
+        self._data["image-filename"] = np.array(self._data["image-filename"])

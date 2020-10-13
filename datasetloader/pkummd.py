@@ -48,9 +48,9 @@ class PKUMMD(DatasetLoader):
 
     def __init__(self,
                  base_dir,
-                 lazy_loading=True,
                  single_person=False,
-                 include_missing=True):
+                 include_missing=True,
+                 lazy_loading=True):
         """
         Parameters
         ----------
