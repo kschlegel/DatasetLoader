@@ -11,7 +11,7 @@ class ChaLearn2013(DatasetLoader):
     https://gesture.chalearn.org/2013-multi-modal-challenge/data-2013-challenge
     """
     landmarks = [
-        "pelvis", "spine", "neck", "head top", "left shoulder", "left elbow",
+        "pelvis", "belly", "neck", "head top", "left shoulder", "left elbow",
         "left wrist", "left hand", "right shoulder", "right elbow",
         "right wrist", "right hand", "left hip", "left knee", "left ankle",
         "left foot", "right hip", "right knee", "right ankle", "right foot"
@@ -119,12 +119,12 @@ class ChaLearn2013(DatasetLoader):
         sample_data = sample_data["Video"][0, 0]
         for frame in range(sample_data["NumFrames"][0, 0]):
             frame_data = sample_data["Frames"][0, frame]["Skeleton"][0, 0]
-            # the first few frames can be just zeros, skip
-            if isinstance(frame_data["JointType"][0, 0][0], str):
-                if "keypoints2D" in self._selected_cols:
-                    data["keypoints2D"] += [frame_data["PixelPosition"]]
-                if "keypoints3D" in self._selected_cols:
-                    data["keypoints3D"] += [frame_data["WorldPosition"]]
+            # # the first few frames can be just zeros, skip
+            # if isinstance(frame_data["JointType"][0, 0][0], str):
+            if "keypoints2D" in self._selected_cols:
+                data["keypoints2D"] += [frame_data["PixelPosition"]]
+            if "keypoints3D" in self._selected_cols:
+                data["keypoints3D"] += [frame_data["WorldPosition"]]
         if "actions" in self._selected_cols:
             for gesture in sample_data["Labels"][0]:
                 data["actions"] += [
@@ -143,8 +143,9 @@ class ChaLearn2013(DatasetLoader):
         data = super().__getitem__(index)
         # super() provides all non-lazy access, only need to do more for data
         # that hasn't been loaded previously
-        if len(self._selected_cols - data.keys()) > 0:
+        missing_cols = self._selected_cols - data.keys()
+        if len(missing_cols) > 0:
             lazy_data = self.load_datafile(self._data["data-filename"][index])
-            for col, val in lazy_data.items():
-                data[col] = val
+            for col in missing_cols:
+                data[col] = lazy_data[col]
         return data
