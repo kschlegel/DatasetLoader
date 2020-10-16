@@ -5,3 +5,6 @@ from .lspextended import LSPExtended
 from .mpii import MPII
 from .ucfsports import UCFSports
 from .pkummd import PKUMMD
+from .chalearn2013 import ChaLearn2013
+from .totalcapture import TotalCapture
+from .mpi3dhp import MPI3DHP

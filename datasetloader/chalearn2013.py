@@ -77,6 +77,9 @@ class ChaLearn2013(DatasetLoader):
 
         subset_dir = os.path.join(base_dir, subset_long + "data")
         for sample in os.listdir(subset_dir):
+            # Skip hidden files such as .DS_Store on mac
+            if sample.startswith("."):
+                continue
             sample_dir = os.path.join(subset_dir, sample)
             sample_id = int(sample[6:])  # sample = "SampleXXXXX"
 

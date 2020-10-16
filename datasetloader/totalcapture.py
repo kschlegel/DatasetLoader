@@ -10,10 +10,11 @@ class TotalCapture(DatasetLoader):
     https://cvssp.org/data/totalcapture/data/
     """
     landmarks = [
-        'Hips', 'Spine', 'Spine1', 'Spine2', 'Spine3', 'Neck', 'Head',
-        'RightShoulder', 'RightArm', 'RightForeArm', 'RightHand',
-        'LeftShoulder', 'LeftArm', 'LeftForeArm', 'LeftHand', 'RightUpLeg',
-        'RightLeg', 'RightFoot', 'LeftUpLeg', 'LeftLeg', 'LeftFoot'
+        'pelvis', 'belly', 'mid torso', 'thorax', 'shoulder centre', 'neck',
+        'head top', 'right clavicle', 'right shoulder', 'right elbow',
+        'right wrist', 'left clavicle', 'left shoulder', 'left elbow',
+        'left wrist', 'right hip', 'right knee', 'right ankle', 'left hip',
+        'left knee', 'left ankle'
     ]
 
     actions = ["rom", "walking", "freestyle", "acting"]
@@ -74,7 +75,8 @@ class TotalCapture(DatasetLoader):
                         ])
                         self._data["keypoint-filename"].append(
                             os.path.join(mocap_path, 'gt_skel_gbl_pos.txt'))
-                        self._data["action"].append(action)
+                        self._data["action"].append(
+                            TotalCapture.actions.index(action))
                         if ((action == "walking" and sequence_id == 2)
                                 or (action == "freestyle" and sequence_id == 3)
                                 or (action == "acting" and sequence_id == 3)):
