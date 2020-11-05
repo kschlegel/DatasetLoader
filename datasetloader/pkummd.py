@@ -161,9 +161,10 @@ class PKUMMD(DatasetLoader):
                 line = f.readline()
                 testset = line[:line.rfind(",")].split(", ")
                 for filename in testset:
-                    if filename == sample_file:
-                        self._splits[split]["test"].append(i)
-                        break
+                    for i, sample_file in enumerate(filename_list):
+                        if filename == sample_file:
+                            self._splits[split]["test"].append(i)
+                            break
 
         super().__init__(lazy_loading)
 
