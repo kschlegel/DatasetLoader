@@ -108,7 +108,8 @@ class PKUMMD(DatasetLoader):
                 PKUMMD.actions.index(interaction)
                 for interaction in PKUMMD.interactions
             ])
-        for filename in os.listdir(os.path.join(base_dir, "Label")):
+        filelist = sorted(os.listdir(os.path.join(base_dir, "Label")))
+        for filename in filelist:
             filename = filename[:-4]
 
             # the label files are the easiest ones, use these to check at init
@@ -122,8 +123,11 @@ class PKUMMD(DatasetLoader):
                         # Action class ids are one-based in the file
                         action_ids.append(int(l[:l.find(",")]) - 1)
                     if len(interaction_ids.intersection(action_ids)) == len(
-                            action_ids):
+                            set(action_ids)):
                         # this is a sequence with 2 persons, skip
+                        # TODO: This misses a few sequences which have data for
+                        # two skeletons. Are thos true single person with extra
+                        # skeleton or true two person sequences?
                         # TODO: action 17 and 20 occasionally occur as actions
                         # in single person sequences, should maybe fix that
                         continue
