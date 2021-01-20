@@ -18,6 +18,7 @@ class MPI3DHP(DatasetLoader):
         'left ankle', 'left foot', 'left toe', 'right hip', 'right knee',
         'right ankle', 'right foot', 'right toe'
     ]
+    splits = ["default"]
 
     def __init__(self, base_dir, lazy_loading=True):
         """
@@ -48,7 +49,13 @@ class MPI3DHP(DatasetLoader):
             # "fgmask-filenames": [],
             # "chairmask-filenames": [],
         }
-        self._splits = {"default": {"train": [], "test": []}}
+        self._splits = {
+            split: {
+                "train": [],
+                "test": []
+            }
+            for split in MPI3DHP.splits
+        }
 
         self._length = 0
 

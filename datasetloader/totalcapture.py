@@ -19,6 +19,8 @@ class TotalCapture(DatasetLoader):
 
     actions = ["rom", "walking", "freestyle", "acting"]
 
+    splits = ["default"]
+
     def __init__(self, base_dir, lazy_loading=True):
         """
         Parameters
@@ -51,7 +53,13 @@ class TotalCapture(DatasetLoader):
             # "rotations": [],
             # "mask-filename": [],
         }
-        self._splits = {"default": {"train": [], "test": []}}
+        self._splits = {
+            split: {
+                "train": [],
+                "test": []
+            }
+            for split in TotalCapture.splits
+        }
 
         self._length = 0
         for subject_id in range(1, 6):

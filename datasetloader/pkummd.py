@@ -45,6 +45,7 @@ class PKUMMD(DatasetLoader):
         "right foot", "spine shoulder", "left handtip", "left thumb",
         "right handtip", "right thumb"
     ]
+    splits = ["cross-subject", "cross-view"]
 
     def __init__(self,
                  base_dir,
@@ -85,17 +86,15 @@ class PKUMMD(DatasetLoader):
             # "ir-filenames": [],
             # "depth-filenames": [],
         }
+
         # describe the dataset split, containing the ids of elements in the
         # respective sets
         self._splits = {
-            "cross-subject": {
-                "train": [],
-                "test": []
-            },
-            "cross-view": {
+            split: {
                 "train": [],
                 "test": []
             }
+            for split in PKUMMD.splits
         }
 
         self._single_person = single_person

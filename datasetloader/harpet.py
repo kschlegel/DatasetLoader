@@ -20,6 +20,7 @@ class HARPET(DatasetLoader):
         "right elbow", "right shoulder", "left shoulder", "left elbow",
         "left wrist", "stick top", "stick end"
     ]
+    splits = ["default"]
 
     def __init__(self, base_dir):
         """
@@ -32,7 +33,14 @@ class HARPET(DatasetLoader):
         # sequence
         self._data_cols = ["image-filenames", "keypoints", "actions"]
         self._data = {"image-filenames": [], "keypoints": [], "actions": []}
-        self._splits = {"default": {"train": [], "valid": [], "test": []}}
+        self._splits = {
+            split: {
+                "train": [],
+                "valid": [],
+                "test": []
+            }
+            for split in HARPET.splits
+        }
         self._default_split = "default"
 
         super().__init__(lazy_loading=False)

@@ -18,6 +18,7 @@ class LSPExtended(DatasetLoader):
         "left ankle", "right wrist", "right elbow", "right shoulder",
         "left shoulder", "left elbow", "left wrist", "neck", "head top"
     ]
+    splits = None
 
     def __init__(self, base_dir, improved=False):
         """

@@ -17,6 +17,7 @@ class MPII(DatasetLoader):
         "right elbow", "right shoulder", "left shoulder", "left elbow",
         "left wrist"
     ]
+    splits = ["default"]
     reference_scale = 200
 
     def __init__(self, base_dir, single_person=True):
@@ -39,7 +40,13 @@ class MPII(DatasetLoader):
             "centre": [],
             "head_bbox": []
         }
-        self._splits = {"default": {"train": [], "test": []}}
+        self._splits = {
+            split: {
+                "train": [],
+                "test": []
+            }
+            for split in MPII.splits
+        }
 
         super().__init__(lazy_loading=False)
 

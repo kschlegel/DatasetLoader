@@ -24,6 +24,8 @@ class ChaLearn2013(DatasetLoader):
         "buonissimo", "messidaccordo", "sonostufo"
     ]
 
+    splits = ["default"]
+
     def __init__(self, base_dir, lazy_loading=True):
         """
         Parameters
@@ -55,7 +57,14 @@ class ChaLearn2013(DatasetLoader):
         }
         # describe the dataset split, containing the ids of elements in the
         # respective sets
-        self._splits = {"default": {"train": [], "valid": [], "test": []}}
+        self._splits = {
+            split: {
+                "train": [],
+                "valid": [],
+                "test": []
+            }
+            for split in ChaLearn2013.splits
+        }
 
         # with the different datasets having diferent properties its worthwhile
         # having a var to keep track of the length

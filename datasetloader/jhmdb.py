@@ -31,6 +31,8 @@ class JHMDB(DatasetLoader):
         "SSW", "SW", "W", "WNW", "WSW"
     ]
 
+    splits = [str(i) for i in range(1, 4)]
+
     def __init__(self, base_dir, full_body_split=False, lazy_loading=True):
         """
         Parameters
@@ -49,7 +51,13 @@ class JHMDB(DatasetLoader):
             "data-filename": [],
             "action": [],
         }
-        self._splits = {i: {"train": [], "test": []} for i in range(1, 4)}
+        self._splits = {
+            split: {
+                "train": [],
+                "test": []
+            }
+            for split in JHMDB.splits
+        }
 
         self._length = 0
         if full_body_split:

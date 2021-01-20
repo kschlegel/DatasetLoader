@@ -15,6 +15,7 @@ class UCFSports(DatasetLoader):
         "Diving", "Golf-Swing", "Kicking", "Lifting", "Riding-Horse", "Run",
         "SkateBoarding", "Swing-Bench", "Swing-Side", "Walk"
     ]
+    splits = None
 
     def __init__(self, base_dir):
         """

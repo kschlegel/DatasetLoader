@@ -52,6 +52,8 @@ class Human36M(DatasetLoader):
         "walking", "walkdog", "walktogether"
     ]
 
+    splits = ["default"]
+
     def __init__(self, base_dir, lazy_loading=True):
         """
         Parameters
@@ -84,7 +86,13 @@ class Human36M(DatasetLoader):
             "action": [],
             # The dataset also contains other data, to be implemented if/when needed
         }
-        self._splits = {"default": {"train": [], "test": []}}
+        self._splits = {
+            split: {
+                "train": [],
+                "test": []
+            }
+            for split in Human36M.splits
+        }
 
         self._length = 0
         for subject_id in range(1, 11):

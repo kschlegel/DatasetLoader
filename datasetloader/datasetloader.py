@@ -15,6 +15,24 @@ class DatasetLoader(ABC):
     def __len__(self):
         return self._length
 
+    @classmethod
+    def add_args(cls, parser, default_split=None):
+        parser.add_argument('-p',
+                            '--path',
+                            type=str,
+                            required=True,
+                            help="Path to the dataset")
+
+        if cls.splits is not None:
+            if default_split is None:
+                default_split = cls.splits[0]
+            parser.add_argument('-s',
+                                '--split',
+                                type=str,
+                                default=default_split,
+                                choices=cls.splits,
+                                help="Dataset split to use")
+
     def set_cols(self, *args):
         """
         Sets the data columns to be returned on query.
