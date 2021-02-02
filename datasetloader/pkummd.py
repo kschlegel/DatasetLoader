@@ -226,9 +226,10 @@ class PKUMMD(DatasetLoader):
                 action_data[0] -= 1
                 # Correct occasional order errors in the label file
                 if action_data[1] > action_data[2]:
-                    action_data[1], action_data[2] = action_data[
-                        2], action_data[1]
+                    action_data[1], action_data[2] = (action_data[2],
+                                                      action_data[1])
                 actions.append(action_data)
+        actions.sort(key=lambda t: t[1])
         return actions
 
     def __getitem__(self, index):

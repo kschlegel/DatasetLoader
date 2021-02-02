@@ -26,12 +26,14 @@ class DatasetLoader(ABC):
         if cls.splits is not None:
             if default_split is None:
                 default_split = cls.splits[0]
-            parser.add_argument('-s',
-                                '--split',
-                                type=str,
-                                default=default_split,
-                                choices=cls.splits,
-                                help="Dataset split to use")
+            parser.add_argument(
+                '-s',
+                '--split',
+                type=str,
+                default=default_split,
+                choices=cls.splits,
+                help="Dataset split to use (Default is {})".format(
+                    default_split))
 
     def set_cols(self, *args):
         """
