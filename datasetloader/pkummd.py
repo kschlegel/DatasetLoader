@@ -171,6 +171,38 @@ class PKUMMD(DatasetLoader):
 
         super().__init__(lazy_loading)
 
+    def get_single_action_id(self, action_id):
+        """
+        Remaps the label action id into a set of purely single person actions
+        for pure single person tasks.
+        """
+        if not hasattr(self, "_single_action_ids"):
+            counter = 0
+            self._single_action_ids = []
+            for ac in self.actions:
+                if ac in self.interactions:
+                    self._single_action_ids.append(None)
+                else:
+                    self._single_action_ids.append(counter)
+                    counter += 1
+        return self._single_action_ids[action_id]
+
+    def get_interaction_id(self, action_id):
+        """
+        Remaps the label action_ids into a set of purely interaction for pure
+        interaction tasks.
+        """
+        if not hasattr(self, "_interaction_ids"):
+            counter = 0
+            self._interaction_ids = []
+            for ac in self.actions:
+                if ac in self.interactions:
+                    self._interaction_ids.append(counter)
+                    counter += 1
+                else:
+                    self._interaction_ids.append(None)
+        return self._interaction_ids[action_id]
+
     def load_keypointfile(self, filename):
         """
         Load the keypoints sequence from the given file.
