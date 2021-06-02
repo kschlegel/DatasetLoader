@@ -8,3 +8,5 @@ from .pkummd import PKUMMD
 from .chalearn2013 import ChaLearn2013
 from .totalcapture import TotalCapture
 from .mpi3dhp import MPI3DHP
+from .nturgbd import NTURGBD
+from .skeletics152 import Skeletics152

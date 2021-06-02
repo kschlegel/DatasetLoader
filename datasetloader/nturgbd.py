@@ -63,11 +63,11 @@ class NTURGBD(DatasetLoader):
     ]
 
     landmarks = [
-        "pelvis", "spine mid", "neck", "head top", "left shoulder",
+        "pelvis", "mid torso", "neck", "head top", "left shoulder",
         "left elbow", "left wrist", "left hand", "right shoulder",
         "right elbow", "right wrist", "right hand", "left hip", "left knee",
         "left ankle", "left foot", "right hip", "right knee", "right ankle",
-        "right foot", "spine shoulder", "left handtip", "left thumb",
+        "right foot", "shoulder centre", "left handtip", "left thumb",
         "right handtip", "right thumb"
     ]
     splits = []
