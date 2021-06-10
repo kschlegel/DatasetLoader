@@ -42,7 +42,7 @@ class PKUMMD(DatasetLoader):
         "left elbow", "left wrist", "left hand", "right shoulder",
         "right elbow", "right wrist", "right hand", "left hip", "left knee",
         "left ankle", "left foot", "right hip", "right knee", "right ankle",
-        "right foot", "spine shoulder", "left handtip", "left thumb",
+        "right foot", "shoulder centre", "left handtip", "left thumb",
         "right handtip", "right thumb"
     ]
     splits = ["cross-subject", "cross-view"]
