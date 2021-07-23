@@ -104,7 +104,7 @@ class DatasetLoader(ABC):
             for data_key in self._selected_cols if data_key in self._data
         }
 
-    def iterate(self, split_name=None, split=None):
+    def iterate(self, split_name=None, split=None, return_tuple=False):
         """
         Iterate over the dataset or a subset of it.
 
@@ -113,17 +113,24 @@ class DatasetLoader(ABC):
         split_name : string, optional
             If given and split is given iterate over the specified data subset
             (if it exists). If None, iterate over the whole dataset.
-        split_name : string, optional
+        split : string, optional
             One of {train, valid, test} If given and split_name is given
             iterate over the specified data subset (if it exists). If None,
             iterate over the whole dataset.
+        return_tuple : bool, optional (default is False)
+            If True return the data elements as tuples instead of dicts as
+            __getitem__does
         """
         if split_name is not None and split is not None:
             index_list = self.get_split(split_name, split)
         else:
             index_list = range(len(self))
         for i in index_list:
-            yield self[i]
+            if return_tuple:
+                sample = self[i]
+                yield tuple(sample[col] for col in self._selected_cols)
+            else:
+                yield self[i]
 
     def get_split(self, split_name, split):
         """
