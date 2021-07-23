@@ -10,3 +10,4 @@ from .totalcapture import TotalCapture
 from .mpi3dhp import MPI3DHP
 from .nturgbd import NTURGBD
 from .skeletics152 import Skeletics152
+from .berkeleymhad import BerkeleyMHAD
