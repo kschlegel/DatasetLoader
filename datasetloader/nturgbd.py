@@ -1,6 +1,6 @@
 """
-This class is currently rather incomplete, only contains the functionality needed
-for a first look at the skeletons.
+This class is currently rather incomplete, only contains the basic
+functionality to get the skeletons.
 """
 
 import os
@@ -70,9 +70,13 @@ class NTURGBD(DatasetLoader):
         "right foot", "shoulder centre", "left handtip", "left thumb",
         "right handtip", "right thumb"
     ]
-    splits = []
+    splits = ["cross-subject", "cross-view"]
 
-    def __init__(self, base_dir, lazy_loading=True):
+    def __init__(self,
+                 base_dir,
+                 lazy_loading=True,
+                 ntu120=False,
+                 ignore_missing_skeletons=True):
         """
         Parameters
         ----------
@@ -86,12 +90,14 @@ class NTURGBD(DatasetLoader):
             "keypoints3D",
             "keypoints2D",
             "keypoints_depth",
+            "action",
             # The dataset also contains these, to be implemented if/when needed
             # "video-filename",
             # "depth-filenames",
         ]
         self._data = {
             "keypoint-filename": [],
+            "action": []
             # The dataset also contains these, to be implemented if/when needed
             # "video-filename": [],
             # "depth-filenames": [],
@@ -108,10 +114,42 @@ class NTURGBD(DatasetLoader):
         }
 
         self._length = 0
-        for filename in os.listdir(os.path.join(base_dir, "skeletons")):
-            self._data["keypoint-filename"].append(
-                os.path.join(base_dir, "skeletons", filename))
-            self._length += 1
+
+        # Load list ofs of samples to ignore
+        missing_skeletons = []
+        if ignore_missing_skeletons:
+            filenames = ["NTU_RGBD_samples_with_missing_skeletons.txt"]
+            if ntu120:
+                filenames.append(
+                    "NTU_RGBD120_samples_with_missing_skeletons.txt")
+            for filename in filenames:
+                with open(os.path.join(base_dir, filename), "r") as f:
+                    for i in range(3):
+                        f.readline()
+                    for line in f:
+                        missing_skeletons.append(line.strip())
+
+        skeleton_dir = os.path.join(base_dir, "nturgb+d_skeletons")
+        for filename in os.listdir(skeleton_dir):
+            subject_id = int(filename[1:4])
+            if ntu120 or subject_id <= 17:
+                if filename[:-9] in missing_skeletons:
+                    continue
+                self._data["keypoint-filename"].append(
+                    os.path.join(skeleton_dir, filename))
+                action_id = int(filename[17:20]) - 1
+                self._data["action"].append(action_id)
+                if subject_id in (1, 2, 4, 5, 8, 9, 13, 14, 15, 16, 17, 18, 19,
+                                  25, 27, 28, 31, 34, 35, 38):
+                    self._splits["cross-subject"]["train"].append(self._length)
+                else:
+                    self._splits["cross-subject"]["test"].append(self._length)
+                camera_id = int(filename[5:8])
+                if camera_id != 1:
+                    self._splits["cross-view"]["train"].append(self._length)
+                else:
+                    self._splits["cross-view"]["train"].append(self._length)
+                self._length += 1
 
         super().__init__(lazy_loading)
 
@@ -122,9 +160,12 @@ class NTURGBD(DatasetLoader):
         For reference, the format of the skeleton-file is:
         num_frames
         num_bodies (in frame 0)
-        body_0_info: ID, clipped_edges, hand_left_confidence, hand_left_state,hand_right_confidence, hand_right_state, is_restricted, lean_x, lean_y, tracking_state
+        body_0_info: ID, clipped_edges, hand_left_confidence, hand_left_state,
+                     hand_right_confidence, hand_right_state, is_restricted,
+                     lean_x, lean_y, tracking_state
         num_joints (of person 0 in frame 0, constant 25)
-        joint_0_info: x, y, z, depth_x, depth_y, rgb_x, rgb_y, orientation_w, orientation_x, orientation_y, orientation_z, tracking_state
+        joint_0_info: x,y,z,depth_x,depth_y,rgb_x,rgb_y,orientation_w,
+                      orientation_x,orientation_y,orientation_z,tracking_state
         . . .
         body_1_info...
         . . .
@@ -151,8 +192,10 @@ class NTURGBD(DatasetLoader):
             data_index += 1
             person_count = int(data[data_index][:-1])
             if existing_persons > 0 and person_count != existing_persons:
-                print("INCONSISTENT PERSON COUNT", existing_persons,
-                      person_count)
+                # print("INCONSISTENT PERSON COUNT", existing_persons,
+                #       person_count)
+                # Why do these occur? What do they mean/do they matter?
+                pass
             if existing_persons < person_count:
                 add_persons = person_count - existing_persons
                 if "keypoints3D" in self._selected_cols:
@@ -191,6 +234,8 @@ class NTURGBD(DatasetLoader):
                                                  joint_id] = jointinfo[3:5]
         persons = []
         if "keypoints3D" in self._selected_cols:
+            if persons3d.shape[0] == 0:
+                print("Empty person array", filename)
             persons.append(persons3d)
         if "keypoints2D" in self._selected_cols:
             persons.append(persons2d)
