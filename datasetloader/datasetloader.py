@@ -1,5 +1,7 @@
 from abc import ABC
 
+from .datasubset import DataSubset
+
 
 class DatasetLoader(ABC):
     """
@@ -9,6 +11,7 @@ class DatasetLoader(ABC):
     def __init__(self, lazy_loading):
         self._selected_cols = []
         self._lazy = lazy_loading
+        self._cur_split = None
         if not self._lazy:
             self._load_all()
 
@@ -34,6 +37,35 @@ class DatasetLoader(ABC):
                 choices=cls.splits,
                 help="Dataset split to use (Default is {})".format(
                     default_split))
+
+    def set_split(self, split_name):
+        if split_name not in self._splits:
+            raise KeyError("This dataset has no split '" + split_name + "'!")
+        self._cur_split = split_name
+
+    @property
+    def trainingset(self):
+        return self._datasubset("train")
+
+    @property
+    def validationset(self):
+        return self._datasubset("valid")
+
+    @property
+    def testset(self):
+        return self._datasubset("test")
+
+    def _datasubset(self, subset):
+        if self._cur_split is None:
+            raise KeyError("A split must be selected using '.set_split' "
+                           "before accessing a subset")
+        elif self._cur_split not in self._splits:
+            raise KeyError("This dataset has no split '" + self._cur_split +
+                           "'!")
+        if subset not in self._splits[self._cur_split]:
+            raise KeyError("The split '" + self._cur_split +
+                           "' doesn't have a subset " + subset)
+        return DataSubset(self, self._cur_split, subset)
 
     def set_cols(self, *args):
         """
