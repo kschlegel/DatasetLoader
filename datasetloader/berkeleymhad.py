@@ -69,6 +69,7 @@ class BerkeleyMHAD(DatasetLoader):
             for split in BerkeleyMHAD.splits
         }
 
+        self._length = 0
         for subject in range(1, 13):
             for action in range(1, 12):
                 for recording in range(1, 6):
@@ -81,6 +82,11 @@ class BerkeleyMHAD(DatasetLoader):
                             "skl_s{:02d}_a{:02d}_r{:02d}_pos.csv".format(
                                 subject, action, recording)))
                     self._data["action"].append(action - 1)
+                    if subject < 8:
+                        self._splits["default"]["train"].append(self._length)
+                    else:
+                        self._splits["default"]["test"].append(self._length)
+                    self._length += 1
 
         super().__init__(lazy_loading)
 
