@@ -47,25 +47,38 @@ class PKUMMD(DatasetLoader):
     ]
     splits = ["cross-subject", "cross-view"]
 
+    @classmethod
+    def add_argparse_args(cls, parser, default_split=None):
+        super().add_argparse_args(parser, default_split)
+        child_parser = parser.add_argument_group("PKU-MMD specific arguments")
+        child_parser.add_argument(
+            "--single_person",
+            action="store_true",
+            help="Only use sequences with a single actor, no interactions.")
+        child_parser.add_argument(
+            "--exclude_missing",
+            action="store_true",
+            help="If given missing skeletons are returned as an empty list "
+            "instead of a zero vector in skeleton shape")
+        return parser
+
     def __init__(self,
-                 base_dir,
+                 data_path,
                  single_person=False,
-                 include_missing=True,
-                 lazy_loading=True):
+                 exclude_missing=False,
+                 **kwargs):
         """
         Parameters
         ----------
-        base_dir : string
+        data_path : string
             folder with dataset on disk
-        lazy_loading : bool, optional (default is True)
-            Only load individual data items when queried
         single_person : bool, optional (default is False)
             If true only load sequences with a single actor (either at init
             time if load_skeletons is True or at access time when calling
             load_keypointfile if load_skeletons is False)
-        include_missing : bool, optional (default is True)
-            If True missing skeletons are returned as zero-vectors of the same
-            shape as a skeleton. If False missing skeletons are returned as an
+        exclude_missing : bool, optional (default is False)
+            If False missing skeletons are returned as zero-vectors of the same
+            shape as a skeleton. If True missing skeletons are returned as an
             empty list.
         """
         self._data_cols = [
@@ -98,7 +111,7 @@ class PKUMMD(DatasetLoader):
         }
 
         self._single_person = single_person
-        self._include_missing = include_missing
+        self._exclude_missing = exclude_missing
 
         self._length = 0
         filename_list = []
@@ -107,7 +120,7 @@ class PKUMMD(DatasetLoader):
                 PKUMMD.actions.index(interaction)
                 for interaction in PKUMMD.interactions
             ])
-        filelist = sorted(os.listdir(os.path.join(base_dir, "Label")))
+        filelist = sorted(os.listdir(os.path.join(data_path, "Label")))
         for filename in filelist:
             filename = filename[:-4]
 
@@ -115,7 +128,7 @@ class PKUMMD(DatasetLoader):
             # time which of the sequences are single person if the dataset is
             # to be restricted to single person
             if single_person:
-                with open(os.path.join(base_dir, "Label", filename + ".txt"),
+                with open(os.path.join(data_path, "Label", filename + ".txt"),
                           "r") as f:
                     action_ids = []
                     for l in f:
@@ -134,23 +147,24 @@ class PKUMMD(DatasetLoader):
             # store short filename for easier identification for split info
             filename_list.append(filename)
             self._data["keypoint-filename"].append(
-                os.path.join(base_dir, "Data", "SKELETON_VIDEO",
+                os.path.join(data_path, "Data", "SKELETON_VIDEO",
                              filename + ".txt"))
             self._data["action-filename"].append(
-                os.path.join(base_dir, "Label", filename + ".txt"))
+                os.path.join(data_path, "Label", filename + ".txt"))
             self._data["video-filename"].append(
-                os.path.join(base_dir, "Data", "RGB_VIDEO", filename + ".avi"))
+                os.path.join(data_path, "Data", "RGB_VIDEO",
+                             filename + ".avi"))
             # self._data["ir-filenames"].append(
-            #     os.path.join(base_dir, "Data", "IR_VIDEO",
+            #     os.path.join(data_path, "Data", "IR_VIDEO",
             #                  filename + "-infrared.avi"))
             # self._data["depth-filenames"].append(
-            #     os.path.join(base_dir, "Data", "DEPTH_VIDEO",
+            #     os.path.join(data_path, "Data", "DEPTH_VIDEO",
             #                  filename + "-depth.avi"))
             self._length += 1
 
         # Load splits information
         for split in self._splits.keys():
-            with open(os.path.join(base_dir, "Split", split + ".txt"),
+            with open(os.path.join(data_path, "Split", split + ".txt"),
                       "r") as f:
                 f.readline()  # Dump the "Training videos:" headline
                 line = f.readline()
@@ -169,7 +183,7 @@ class PKUMMD(DatasetLoader):
                             self._splits[split]["test"].append(i)
                             break
 
-        super().__init__(lazy_loading)
+        super().__init__(**kwargs)
 
     def get_single_action_id(self, action_id):
         """
@@ -228,7 +242,7 @@ class PKUMMD(DatasetLoader):
                     # there are no skeletons at all in a frame
                     has_data = np.count_nonzero(
                         raw_kp[i * 75:(i + 1) * 75]) > 0
-                    if self._include_missing or has_data:
+                    if not self._exclude_missing or has_data:
                         frame.append(raw_kp[i * 75:(i + 1) * 75].reshape(
                             25, 3))
                         if self._single_person and has_data:
@@ -236,7 +250,7 @@ class PKUMMD(DatasetLoader):
                 if self._single_person:
                     if num_people > 1:
                         return None
-                    elif self._include_missing:
+                    elif not self._exclude_missing:
                         frame = frame[0]
                 keypoints.append(np.array(frame))
         return np.array(keypoints)

@@ -18,11 +18,11 @@ class LSP(DatasetLoader):
     ]
     splits = ["default"]
 
-    def __init__(self, base_dir):
+    def __init__(self, data_path, **kwargs):
         """
         Parameters
         ----------
-        base_dir : string
+        data_path : string
             folder with dataset on disk
         """
         self._data_cols = ["image-filename", "keypoints2D"]
@@ -35,14 +35,15 @@ class LSP(DatasetLoader):
         }
         self._length = 2000
 
-        super().__init__(lazy_loading=False)
+        kwargs["no_lazy_loading"] = True
+        super().__init__(**kwargs)
 
-        raw_data = loadmat(os.path.join(base_dir, "joints.mat"))
+        raw_data = loadmat(os.path.join(data_path, "joints.mat"))
         self._data["keypoints2D"] = np.transpose(raw_data['joints'])
         for i in trange(0, 2000):
             self._data["image-filename"].append(
                 os.path.join(
-                    base_dir, "images", "im" + ("0" * (4 - len(str(i + 1)))) +
+                    data_path, "images", "im" + ("0" * (4 - len(str(i + 1)))) +
                     str(i + 1) + ".jpg"))
 
         self._data["image-filename"] = np.array(self._data["image-filename"])

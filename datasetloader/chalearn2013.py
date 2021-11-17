@@ -26,14 +26,12 @@ class ChaLearn2013(DatasetLoader):
 
     splits = ["default"]
 
-    def __init__(self, base_dir, lazy_loading=True):
+    def __init__(self, data_path, **kwargs):
         """
         Parameters
         ----------
-        base_dir : string
+        data_path : string
             folder with dataset on disk
-        lazy_loading : bool, optional (default is True)
-            Only load individual data items when queried
         """
         self._data_cols = [
             "video-filename",
@@ -69,11 +67,11 @@ class ChaLearn2013(DatasetLoader):
         # with the different datasets having diferent properties its worthwhile
         # having a var to keep track of the length
         self._length = 0
-        #self._load_data_subset(base_dir, "train")
-        self._load_data_subset(base_dir, "valid")
-        super().__init__(lazy_loading)
+        #self._load_data_subset(data_path, "train")
+        self._load_data_subset(data_path, "valid")
+        super().__init__(**kwargs)
 
-    def _load_data_subset(self, base_dir, subset):
+    def _load_data_subset(self, data_path, subset):
         """
         subset = [train, valid, test]
         """
@@ -84,7 +82,7 @@ class ChaLearn2013(DatasetLoader):
         else:
             subset_long = subset
 
-        subset_dir = os.path.join(base_dir, subset_long + "data")
+        subset_dir = os.path.join(data_path, subset_long + "data")
         for sample in os.listdir(subset_dir):
             # Skip hidden files such as .DS_Store on mac
             if sample.startswith("."):

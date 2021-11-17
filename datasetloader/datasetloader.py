@@ -8,10 +8,13 @@ class DatasetLoader(ABC):
     Base class for all dataset loaders to provide a common interface for
     retrieving the data out of the dataset object.
     """
-    def __init__(self, lazy_loading):
+    _general_parser_args_added = False
+    _parser_split_added = False
+
+    def __init__(self, no_lazy_loading=False, split=None, **kwargs):
         self._selected_cols = []
-        self._lazy = lazy_loading
-        self._cur_split = None
+        self._lazy = not no_lazy_loading
+        self.set_split(split)
         if not self._lazy:
             self._load_all()
 
@@ -19,17 +22,24 @@ class DatasetLoader(ABC):
         return self._length
 
     @classmethod
-    def add_args(cls, parser, default_split=None):
-        parser.add_argument('-p',
-                            '--path',
-                            type=str,
-                            required=True,
-                            help="Path to the dataset")
-
-        if cls.splits is not None:
+    def add_argparse_args(cls, parser, default_split=None):
+        if not cls._general_parser_args_added:
+            child_parser = parser.add_argument_group(
+                "DatasetLoader specific arguments")
+            child_parser.add_argument('-p',
+                                      '--data_path',
+                                      type=str,
+                                      required=True,
+                                      help="Path to the dataset")
+            child_parser.add_argument("--no_lazy_loading",
+                                      action="store_false",
+                                      help="Disable lazy data loading (some "
+                                      "small datasets never use lazy loading)")
+            DatasetLoader._general_parser_args_added = True
+        if cls.splits is not None and not cls._parser_split_added:
             if default_split is None:
                 default_split = cls.splits[0]
-            parser.add_argument(
+            child_parser.add_argument(
                 '-s',
                 '--split',
                 type=str,
@@ -37,9 +47,11 @@ class DatasetLoader(ABC):
                 choices=cls.splits,
                 help="Dataset split to use (Default is {})".format(
                     default_split))
+            DatasetLoader._parser_split_added = True
+        return parser
 
     def set_split(self, split_name):
-        if split_name not in self._splits:
+        if split_name not in self._splits and split_name is not None:
             raise KeyError("This dataset has no split '" + split_name + "'!")
         self._cur_split = split_name
 

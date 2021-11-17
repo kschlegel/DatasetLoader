@@ -20,14 +20,12 @@ class MPI3DHP(DatasetLoader):
     ]
     splits = ["default"]
 
-    def __init__(self, base_dir, lazy_loading=True):
+    def __init__(self, data_path, **kwargs):
         """
         Parameters
         ----------
-        base_dir : string
+        data_path : string
             folder with dataset on disk
-        lazy_loading : bool, optional (default is True)
-            Only load individual data items when queried
         """
         self._data_cols = [
             "keypoint-filename",
@@ -65,9 +63,9 @@ class MPI3DHP(DatasetLoader):
                       (6171, 6675), (12820, 12312), (6188, 6145), (6239, 6320),
                       (6468, 6054)]
         for subject_id in range(1, 9):
-            if os.path.exists(os.path.join(base_dir, "S" + str(subject_id))):
+            if os.path.exists(os.path.join(data_path, "S" + str(subject_id))):
                 for sequence_id in range(1, 3):
-                    sequence_path = os.path.join(base_dir,
+                    sequence_path = os.path.join(data_path,
                                                  "S" + str(subject_id),
                                                  "Seq" + str(sequence_id))
                     self._data["keypoint-filename"].append(
@@ -87,7 +85,7 @@ class MPI3DHP(DatasetLoader):
                     self._length += 1
         # Select the set of cams for which we have keypoints video
         self.select_cameraset("vnect")
-        super().__init__(lazy_loading=lazy_loading)
+        super().__init__(**kwargs)
 
     def select_cameraset(self, camset_key='vnect'):
         """

@@ -21,11 +21,11 @@ class TotalCapture(DatasetLoader):
 
     splits = ["default"]
 
-    def __init__(self, base_dir, lazy_loading=True):
+    def __init__(self, data_path, **kwargs):
         """
         Parameters
         ----------
-        base_dir : string
+        data_path: string
             folder with dataset on disk
         lazy_loading : bool, optional (default is True)
             Only load individual data items when queried
@@ -65,11 +65,11 @@ class TotalCapture(DatasetLoader):
         for subject_id in range(1, 6):
             for action in TotalCapture.actions:
                 for sequence_id in range(1, 4):
-                    mocap_path = os.path.join(base_dir, "S" + str(subject_id),
+                    mocap_path = os.path.join(data_path "S" + str(subject_id),
                                               "mocap_csv",
                                               action + str(sequence_id))
                     if os.path.exists(mocap_path):
-                        video_dir = os.path.join(base_dir,
+                        video_dir = os.path.join(data_path
                                                  "S" + str(subject_id),
                                                  "video",
                                                  action + str(sequence_id))
@@ -94,7 +94,7 @@ class TotalCapture(DatasetLoader):
                             self._splits["default"]["train"].append(
                                 self._length)
                         self._length += 1
-        super().__init__(lazy_loading)
+        super().__init__(**kwargs)
 
     def load_keypointfile(self, filename):
         """

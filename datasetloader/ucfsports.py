@@ -17,11 +17,11 @@ class UCFSports(DatasetLoader):
     ]
     splits = None
 
-    def __init__(self, base_dir):
+    def __init__(self, data_path, **kwargs):
         """
         Parameters
         ----------
-        base_dir : string
+        data_path : string
             folder with dataset on disk
         """
         self._data_cols = [
@@ -39,13 +39,14 @@ class UCFSports(DatasetLoader):
         # Add Action localisation split here for completeness?
         self._splits = None
 
-        super().__init__(lazy_loading=False)
+        kwargs["no_lazy_loading"] = True
+        super().__init__(**kwargs)
 
         self._length = 0
         viewpoints = ("", "-Front", "-Side", "-Back", "Angle")
         for cls_id, cls in tqdm(enumerate(UCFSports.classes)):
             for vp in viewpoints:
-                cls_folder = os.path.join(base_dir, "ucf action", cls + vp)
+                cls_folder = os.path.join(data_path, "ucf action", cls + vp)
                 if os.path.exists(cls_folder):
                     video_id = "001"
                     while os.path.exists(os.path.join(cls_folder, video_id)):

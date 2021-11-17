@@ -20,13 +20,22 @@ class MPII(DatasetLoader):
     splits = ["default"]
     reference_scale = 200
 
-    def __init__(self, base_dir, single_person=True):
+    @classmethod
+    def add_argparse_args(cls, parser, default_split=None):
+        super().add_argparse_args(parser, default_split)
+        child_parser = parser.add_argument_group("MPII specific arguments")
+        child_parser.add_argument("--single_person",
+                                  action="store_true",
+                                  help="Load the small cropped images.")
+        return parser
+
+    def __init__(self, data_path, single_person=False, **kwargs):
         """
         Parameters
         ----------
-        base_dir : string
+        data_path : string
             folder with dataset on disk
-        single_person : bool, optional (default is True)
+        single_person : bool, optional (default is False)
             If true load the small, readily cropped images and corresponding
             keypoints.
         """
@@ -48,11 +57,12 @@ class MPII(DatasetLoader):
             for split in MPII.splits
         }
 
-        super().__init__(lazy_loading=False)
+        kwargs["no_lazy_loading"] = True
+        super().__init__(**kwargs)
 
         print("Loading the data file. This may take a while...")
         self._length = 0
-        raw_data = loadmat(os.path.join(base_dir,
+        raw_data = loadmat(os.path.join(data_path,
                                         "mpii_human_pose_v1_u12_1.mat"),
                            struct_as_record=False,
                            squeeze_me=True)
@@ -167,7 +177,7 @@ class MPII(DatasetLoader):
                 self._splits["default"]["train"].append(self._length)
 
             self._data["image-filename"].append(
-                os.path.join(base_dir, "images",
+                os.path.join(data_path, "images",
                              raw_data["RELEASE"].annolist[img_id].image.name))
             self._data["keypoints2D"].append(np.array(keypoints))
             self._data["centre"].append(np.array(centres))

@@ -18,7 +18,7 @@ class BerkeleyMHAD(DatasetLoader):
     ]
 
     landmarks = [
-        "pelvis", "belly", "mid torso", "thorax", "neck", "head",
+        "pelvis", "belly", "mid torso", "thorax", "neck", "head top",
         "right shoulder", "right elbow", "right wrist", "left shoulder",
         "left elbow", "left wrist", "right hip", "right knee", "right ankle",
         "right foot", "left hip", "left knee", "left ankle", "left foot"
@@ -43,14 +43,12 @@ class BerkeleyMHAD(DatasetLoader):
 
     splits = ["default"]
 
-    def __init__(self, base_dir, lazy_loading=True):
+    def __init__(self, data_path, **kwargs):
         """
         Parameters
         ----------
-        base_dir : string
+        data_path : string
             folder with dataset on disk
-        lazy_loading : bool, optional (default is True)
-            Only load individual data items when queried
         """
         self._data_cols = [
             "keypoint-filename",
@@ -78,7 +76,7 @@ class BerkeleyMHAD(DatasetLoader):
                         continue
                     self._data["keypoint-filename"].append(
                         os.path.join(
-                            base_dir, "Mocap", "SkeletalData", "csv",
+                            data_path, "Mocap", "SkeletalData", "csv",
                             "skl_s{:02d}_a{:02d}_r{:02d}_pos.csv".format(
                                 subject, action, recording)))
                     self._data["action"].append(action - 1)
@@ -88,7 +86,7 @@ class BerkeleyMHAD(DatasetLoader):
                         self._splits["default"]["test"].append(self._length)
                     self._length += 1
 
-        super().__init__(lazy_loading)
+        super().__init__(**kwargs)
 
     def load_keypointfile(self, filename):
         """

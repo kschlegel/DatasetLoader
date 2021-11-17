@@ -22,11 +22,11 @@ class HARPET(DatasetLoader):
     ]
     splits = ["default"]
 
-    def __init__(self, base_dir):
+    def __init__(self, data_path, **kwargs):
         """
         Parameters
         ----------
-        base_dir : string
+        data_path : string
             folder with dataset on disk
         """
         # Elements of filenames here are 3-tuples of the 3 frames forming one
@@ -43,22 +43,23 @@ class HARPET(DatasetLoader):
         }
         self._default_split = "default"
 
-        super().__init__(lazy_loading=False)
+        kwargs["no_lazy_loading"] = True
+        super().__init__(**kwargs)
 
         # load training set
-        self._parse_h5_file(base_dir, "train")
+        self._parse_h5_file(data_path, "train")
         set_len = len(self._data["actions"])
         self._splits[self._default_split]["train"] = [
             i for i in range(set_len)
         ]
         # load validation set
-        self._parse_h5_file(base_dir, "valid")
+        self._parse_h5_file(data_path, "valid")
         self._splits[self._default_split]["valid"] = [
             i for i in range(set_len, len(self._data["actions"]))
         ]
         set_len = len(self._data["actions"])
         # load test set
-        self._parse_h5_file(base_dir, "test")
+        self._parse_h5_file(data_path, "test")
         self._splits[self._default_split]["test"] = [
             i for i in range(set_len, len(self._data["actions"]))
         ]
@@ -67,13 +68,13 @@ class HARPET(DatasetLoader):
         for key in self._data.keys():
             self._data[key] = np.array(self._data[key])
 
-    def _parse_h5_file(self, base_dir, split):
+    def _parse_h5_file(self, data_path, split):
         """
         Parses one of the .h5 files for the training, validation or testset.
         This seems to be a very inefficient way to get the data but the only
         way that team to work to parse these files?
         """
-        h5_file = h5py.File(os.path.join(base_dir, "annot_" + split + ".h5"),
+        h5_file = h5py.File(os.path.join(data_path, "annot_" + split + ".h5"),
                             "r")
         for seq in trange(0,
                           len(h5_file["imgname"]),
@@ -86,7 +87,7 @@ class HARPET(DatasetLoader):
                         filenames[i] += chr(int(h5_file["imgname"][seq +
                                                                    i][j]))
                 action = filenames[i][14:filenames[i].find("_")]
-                filenames[i] = os.path.join(base_dir, "images_" + split,
+                filenames[i] = os.path.join(data_path, "images_" + split,
                                             filenames[i])
             self._data["image-filenames"].append(tuple(filenames))
             self._data["keypoints"].append(h5_file["part"][seq:seq + 3])

@@ -33,11 +33,21 @@ class JHMDB(DatasetLoader):
 
     splits = [str(i) for i in range(1, 4)]
 
-    def __init__(self, base_dir, full_body_split=False, lazy_loading=True):
+    @classmethod
+    def add_argparse_args(cls, parser, default_split=None):
+        super().add_argparse_args(parser, default_split)
+        child_parser = parser.add_argument_group("JHMDB specific arguments")
+        child_parser.add_argument(
+            "--full_body_split",
+            action="store_true",
+            help="Load only the subset with the full body visible")
+        return parser
+
+    def __init__(self, data_path, full_body_split=False, **kwargs):
         """
         Parameters
         ----------
-        base_dir : string
+        data_path : string
             folder with dataset on disk
         full_body_split : bool, optional (default is False)
             Load only subset with full body visible if True
@@ -68,19 +78,19 @@ class JHMDB(DatasetLoader):
             split_folder = "splits"
         for cls_id, cls in tqdm(enumerate(JHMDB.actions)):
             # load dat for this class
-            for filename in os.listdir(os.path.join(base_dir, "videos", cls)):
+            for filename in os.listdir(os.path.join(data_path, "videos", cls)):
                 if filename.endswith(".avi"):
                     self._data["video-filename"].append(
-                        os.path.join(base_dir, "videos", cls, filename))
+                        os.path.join(data_path, "videos", cls, filename))
                     self._data["data-filename"].append(
-                        os.path.join(base_dir, "joint_positions", cls,
+                        os.path.join(data_path, "joint_positions", cls,
                                      filename[:-4], "joint_positions.mat"))
                     self._data["action"].append(cls_id)
                     self._length += 1
             # load splits  information for this class
             for split in self._splits.keys():
                 split_file = os.path.join(
-                    base_dir, split_folder,
+                    data_path, split_folder,
                     cls + split_filename + str(split) + ".txt")
                 if os.path.exists(split_file):
                     with open(split_file, 'r') as f:
@@ -94,7 +104,7 @@ class JHMDB(DatasetLoader):
                                         self._splits[split]["train"].append(i)
                                     else:
                                         self._splits[split]["test"].append(i)
-        super().__init__(lazy_loading)
+        super().__init__(**kwargs)
 
     def load_datafile(self, filename):
         """

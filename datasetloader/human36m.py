@@ -54,14 +54,12 @@ class Human36M(DatasetLoader):
 
     splits = ["default"]
 
-    def __init__(self, base_dir, lazy_loading=True):
+    def __init__(self, data_path, **kwargs):
         """
         Parameters
         ----------
-        base_dir : string
+        data_path : string
             folder with dataset on disk
-        lazy_loading : bool, optional (default is True)
-            Only load individual data items when queried
         """
 
         self._data_cols = [
@@ -96,8 +94,9 @@ class Human36M(DatasetLoader):
 
         self._length = 0
         for subject_id in range(1, 11):
-            if os.path.exists(os.path.join(base_dir, "S" + str(subject_id))):
-                keypoint_folder = os.path.join(base_dir, "S" + str(subject_id),
+            if os.path.exists(os.path.join(data_path, "S" + str(subject_id))):
+                keypoint_folder = os.path.join(data_path,
+                                               "S" + str(subject_id),
                                                "MyPoseFeatures")
                 for filename in os.listdir(
                         os.path.join(keypoint_folder, 'D3_Positions')):
@@ -154,7 +153,7 @@ class Human36M(DatasetLoader):
                                 base_filename + "." + cam_name + ".cdf"))
                         video_filenames.append(
                             os.path.join(
-                                base_dir, "S" + str(subject_id), "Videos",
+                                data_path, "S" + str(subject_id), "Videos",
                                 base_filename + "." + cam_name + ".mp4"))
 
                     self._data["video-filenames"].append(video_filenames)
@@ -165,7 +164,7 @@ class Human36M(DatasetLoader):
                     self._data["keypoint3D-mono-universal-filenames"].append(
                         keypoint3D_mono_universal_filenames)
                     self._length += 1
-        super().__init__(lazy_loading)
+        super().__init__(**kwargs)
 
     def load_keypointfile(self, filename):
         """

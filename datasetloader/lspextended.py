@@ -20,11 +20,22 @@ class LSPExtended(DatasetLoader):
     ]
     splits = None
 
-    def __init__(self, base_dir, improved=False):
+    @classmethod
+    def add_argparse_args(cls, parser, default_split=None):
+        super().add_argparse_args(parser, default_split)
+        child_parser = parser.add_argument_group(
+            "LSP Extended specific arguments")
+        child_parser.add_argument(
+            "--improved",
+            action="store_true",
+            help="Load re-labelled version of the lsp extended data")
+        return parser
+
+    def __init__(self, data_path, improved=False, **kwargs):
         """
         Parameters
         ----------
-        base_dir : string
+        data_path : string
             folder with dataset on disk
         improved : bool, optional (default is False)
             LSP extended has be re-annotated with higher quality labels and the
@@ -42,13 +53,14 @@ class LSPExtended(DatasetLoader):
         else:
             self._length = 10000
 
-        super().__init__(lazy_loading=False)
+        kwargs["no_lazy_loading"] = True
+        super().__init__(**kwargs)
 
-        raw_data = loadmat(os.path.join(base_dir, "joints.mat"))
+        raw_data = loadmat(os.path.join(data_path, "joints.mat"))
         self._data["keypoints2D"] = np.transpose(raw_data['joints'], (2, 0, 1))
         for i in trange(0, 10000):
             filename = os.path.join(
-                base_dir, "images",
+                data_path, "images",
                 "im" + ("0" * (5 - len(str(i + 1)))) + str(i + 1))
             if improved:
                 filename += ".png"

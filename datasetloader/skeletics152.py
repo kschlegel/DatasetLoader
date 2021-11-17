@@ -114,14 +114,12 @@ class Skeletics152(DatasetLoader):
     ]
     splits = ["default"]
 
-    def __init__(self, base_dir, lazy_loading=True):
+    def __init__(self, data_path, **kwargs):
         """
         Parameters
         ----------
-        base_dir : string
+        data_path : string
             folder with dataset on disk
-        lazy_loading : bool, optional (default is True)
-            Only load individual data items when queried
         """
         self._data_cols = [
             "keypoint-filename", "keypoints3D", "keypoints2D", "action",
@@ -141,7 +139,7 @@ class Skeletics152(DatasetLoader):
         youtube_regex = re.compile(r"(.*)_(\d{6})_(\d{6}).json")
         for subset, split in (("training", "train"), ("validation", "test")):
             for action in self.actions:
-                data_path = os.path.join(base_dir, subset, action)
+                data_path = os.path.join(data_path, subset, action)
                 for filename in os.listdir(data_path):
                     self._data["keypoint-filename"].append(
                         os.path.join(data_path, filename))
@@ -155,7 +153,7 @@ class Skeletics152(DatasetLoader):
                     self._splits["default"][split].append(self._length)
                     self._length += 1
 
-        super().__init__(lazy_loading)
+        super().__init__(**kwargs)
 
     def load_keypointfile(self, filename):
         """

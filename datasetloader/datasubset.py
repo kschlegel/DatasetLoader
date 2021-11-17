@@ -15,4 +15,5 @@ class DataSubset:
 
     def __getitem__(self, index):
         sample = self._dataset_loader[self._samples[index]]
-        return (sample[col] for col in self._dataset_loader._selected_cols)
+        return tuple(sample[col]
+                     for col in self._dataset_loader._selected_cols)

@@ -72,18 +72,35 @@ class NTURGBD(DatasetLoader):
     ]
     splits = ["cross-subject", "cross-view"]
 
+    @classmethod
+    def add_argparse_args(cls, parser, default_split=None):
+        super().add_argparse_args(parser, default_split)
+        child_parser = parser.add_argument_group(
+            "NTU RGB+D specific arguments")
+        child_parser.add_argument(
+            "--ntu120",
+            action="store_true",
+            help="Load all 120 instead of first 60 classes of NTU RGB+D")
+        child_parser.add_argument(
+            "--include_missing_skeletons",
+            action="store_true",
+            help="Also include the samples with missing skeletons")
+        return parser
+
     def __init__(self,
-                 base_dir,
-                 lazy_loading=True,
+                 data_path,
                  ntu120=False,
-                 ignore_missing_skeletons=True):
+                 include_missing_skeletons=False,
+                 **kwargs):
         """
         Parameters
         ----------
-        base_dir : string
+        data_path : string
             folder with dataset on disk
-        lazy_loading : bool, optional (default is True)
-            Only load individual data items when queried
+        ntu120 : bool, optional (default is False)
+            Load all 120 instead of first 60 classes of NTU RGB+D
+        include_missing_skeletons : bool, optional (default is False)
+            If True also include all samples that have missing skeletons
         """
         self._data_cols = [
             "keypoint-filename",
@@ -115,21 +132,21 @@ class NTURGBD(DatasetLoader):
 
         self._length = 0
 
-        # Load list ofs of samples to ignore
+        # Load list of of samples to ignore
         missing_skeletons = []
-        if ignore_missing_skeletons:
+        if not include_missing_skeletons:
             filenames = ["NTU_RGBD_samples_with_missing_skeletons.txt"]
             if ntu120:
                 filenames.append(
                     "NTU_RGBD120_samples_with_missing_skeletons.txt")
             for filename in filenames:
-                with open(os.path.join(base_dir, filename), "r") as f:
+                with open(os.path.join(data_path, filename), "r") as f:
                     for i in range(3):
                         f.readline()
                     for line in f:
                         missing_skeletons.append(line.strip())
 
-        skeleton_dir = os.path.join(base_dir, "nturgb+d_skeletons")
+        skeleton_dir = os.path.join(data_path, "nturgb+d_skeletons")
         for filename in os.listdir(skeleton_dir):
             subject_id = int(filename[1:4])
             if ntu120 or subject_id <= 17:
@@ -151,7 +168,7 @@ class NTURGBD(DatasetLoader):
                     self._splits["cross-view"]["train"].append(self._length)
                 self._length += 1
 
-        super().__init__(lazy_loading)
+        super().__init__(**kwargs)
 
     def load_keypointfile(self, filename):
         """
