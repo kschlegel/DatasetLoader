@@ -14,7 +14,8 @@ class DatasetLoader(ABC):
     def __init__(self, no_lazy_loading=False, split=None, **kwargs):
         self._selected_cols = []
         self._lazy = not no_lazy_loading
-        self.set_split(split)
+        if self.splits is not None:
+            self.set_split(split)
         if not self._lazy:
             self._load_all()
 
@@ -32,27 +33,30 @@ class DatasetLoader(ABC):
                                       required=True,
                                       help="Path to the dataset")
             child_parser.add_argument("--no_lazy_loading",
-                                      action="store_false",
+                                      action="store_true",
                                       help="Disable lazy data loading (some "
                                       "small datasets never use lazy loading)")
             DatasetLoader._general_parser_args_added = True
         if cls.splits is not None and not cls._parser_split_added:
-            if default_split is None:
-                default_split = cls.splits[0]
             child_parser.add_argument(
                 '-s',
                 '--split',
                 type=str,
-                default=default_split,
-                choices=cls.splits,
-                help="Dataset split to use (Default is {})".format(
-                    default_split))
+                default="default",
+                help="Dataset split to use. The choices depend on the dataset "
+                "(see individual dataset groups) (Default is the default "
+                "split of the dataset)")
             DatasetLoader._parser_split_added = True
         return parser
 
     def set_split(self, split_name):
-        if split_name not in self._splits and split_name is not None:
-            raise KeyError("This dataset has no split '" + split_name + "'!")
+        if self.splits is None:
+            raise Exception("This dataset does not have any splits!")
+        if split_name not in self.splits:
+            if split_name == "default":
+                split_name = self.splits[0]
+            elif split_name is not None:
+                raise KeyError(f"This dataset has no split '{split_name}'!")
         self._cur_split = split_name
 
     @property

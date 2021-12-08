@@ -36,7 +36,9 @@ class JHMDB(DatasetLoader):
     @classmethod
     def add_argparse_args(cls, parser, default_split=None):
         super().add_argparse_args(parser, default_split)
-        child_parser = parser.add_argument_group("JHMDB specific arguments")
+        child_parser = parser.add_argument_group(
+            "JHMDB specific arguments",
+            "Available splits are: " + ", ".join(cls.splits))
         child_parser.add_argument(
             "--full_body_split",
             action="store_true",

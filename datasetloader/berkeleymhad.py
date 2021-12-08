@@ -43,12 +43,25 @@ class BerkeleyMHAD(DatasetLoader):
 
     splits = ["default"]
 
-    def __init__(self, data_path, **kwargs):
+    @classmethod
+    def add_argparse_args(cls, parser, default_split=None):
+        super().add_argparse_args(parser, default_split)
+        child_parser = parser.add_argument_group(
+            "BerkeleyMHAD specific arguments", "Only has the default split.")
+        child_parser.add_argument("--subsample",
+                                  action="store_true",
+                                  help="Subsample data to 30fps")
+        return parser
+
+    def __init__(self, data_path, subsample=False, **kwargs):
         """
         Parameters
         ----------
         data_path : string
             folder with dataset on disk
+        subsample : bool, optional (default is False)
+            MoCap data is sampled at 480fps, if subsample is set to True the
+            data is subsampled to 30fps
         """
         self._data_cols = [
             "keypoint-filename",
@@ -66,6 +79,8 @@ class BerkeleyMHAD(DatasetLoader):
             }
             for split in BerkeleyMHAD.splits
         }
+
+        self._subsample = subsample
 
         self._length = 0
         for subject in range(1, 13):
@@ -98,9 +113,15 @@ class BerkeleyMHAD(DatasetLoader):
             Filename of the file containing a skeleton sequence
         """
         keypoints = []
+        if self._subsample:
+            counter = 0
         with open(filename, "r") as csv_file:
             csv_file.readline()  # header
             for row in csv_file:
+                if self._subsample:
+                    counter += 1
+                    if counter % 16 != 1:
+                        continue
                 coords = row.split(",")
                 coords = list(map(float, coords[1:]))
                 coords = np.array(coords).reshape((-1, 3))

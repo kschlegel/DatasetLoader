@@ -65,11 +65,11 @@ class TotalCapture(DatasetLoader):
         for subject_id in range(1, 6):
             for action in TotalCapture.actions:
                 for sequence_id in range(1, 4):
-                    mocap_path = os.path.join(data_path "S" + str(subject_id),
+                    mocap_path = os.path.join(data_path, "S" + str(subject_id),
                                               "mocap_csv",
                                               action + str(sequence_id))
                     if os.path.exists(mocap_path):
-                        video_dir = os.path.join(data_path
+                        video_dir = os.path.join(data_path,
                                                  "S" + str(subject_id),
                                                  "video",
                                                  action + str(sequence_id))

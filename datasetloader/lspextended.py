@@ -24,7 +24,7 @@ class LSPExtended(DatasetLoader):
     def add_argparse_args(cls, parser, default_split=None):
         super().add_argparse_args(parser, default_split)
         child_parser = parser.add_argument_group(
-            "LSP Extended specific arguments")
+            "LSP Extended specific arguments", "Does not have any splits.")
         child_parser.add_argument(
             "--improved",
             action="store_true",
