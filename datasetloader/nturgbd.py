@@ -8,9 +8,10 @@ import os
 import numpy as np
 
 from .datasetloader import DatasetLoader
+from .subsetmixin import SubsetMixin
 
 
-class NTURGBD(DatasetLoader):
+class NTURGBD(SubsetMixin, DatasetLoader):
     """
     NTU RGB+D Action Recognition Dataset
     http://rose1.ntu.edu.sg/Datasets/actionRecognition.asp
@@ -74,7 +75,7 @@ class NTURGBD(DatasetLoader):
 
     @classmethod
     def add_argparse_args(cls, parser, default_split=None):
-        super().add_argparse_args(parser, default_split)
+        super().add_argparse_args(parser, default_split=default_split)
         child_parser = parser.add_argument_group(
             "NTU RGB+D specific arguments",
             "Available splits are: " + ", ".join(cls.splits))
@@ -86,22 +87,14 @@ class NTURGBD(DatasetLoader):
             "--include_missing_skeletons",
             action="store_true",
             help="Also include the samples with missing skeletons")
-        child_parser.add_argument(
-            "--select_actions",
-            type=int,
-            nargs="+",
-            help="If given an integer selects only the first n actions. If "
-            "given a list of integers selects exactly the listed actions "
-            "(zero indexed). Selected actions are re-indexed in the order of "
-            "the list.")
         return parser
 
-    def __init__(self,
-                 data_path,
-                 ntu120=False,
-                 include_missing_skeletons=False,
-                 select_actions=None,
-                 **kwargs):
+    def __init__(
+            self,
+            data_path,
+            ntu120=False,
+            include_missing_skeletons=False,
+            **kwargs):
         """
         Parameters
         ----------
@@ -111,13 +104,6 @@ class NTURGBD(DatasetLoader):
             Load all 120 instead of first 60 classes of NTU RGB+D
         include_missing_skeletons : bool, optional (default is False)
             If True also include all samples that have missing skeletons
-        select_actions : list of ints, optional (default is None)
-            If given a list with a single integer only the first n actions are
-            loaded.
-            If given a list of integers exactly the listed actions are
-            loaded (zero indexed). Selected actions are re-indexed in the order
-            of the list.
-            If not given all 60 or 120 actions are loaded.
         """
         self._data_cols = [
             "keypoint-filename",
@@ -171,16 +157,10 @@ class NTURGBD(DatasetLoader):
                     continue
 
                 action_id = int(filename[17:20]) - 1
-                if select_actions is not None:
-                    # skip actions which have not been selected
-                    if len(select_actions) == 1:
-                        if action_id >= select_actions[0]:
-                            continue
-                    else:
-                        if action_id not in select_actions:
-                            continue
-                        else:
-                            action_id = select_actions.index(action_id)
+                action_id = self.select_action(action_id,
+                                               kwargs["select_actions"])
+                if action_id is None:
+                    continue
 
                 self._data["keypoint-filename"].append(
                     os.path.join(skeleton_dir, filename))
@@ -200,14 +180,6 @@ class NTURGBD(DatasetLoader):
         # If ntu120 is not selected only keep the list of the first 60 actions
         if not ntu120:
             self.actions = self.actions[:60]
-        # If action subset is selected, adjust the actions list accordingly
-        if select_actions is not None:
-            if len(select_actions) == 1:
-                self.actions = [
-                    self.actions[i] for i in range(select_actions[0])
-                ]
-            else:
-                self.actions = [self.actions[i] for i in select_actions]
 
         super().__init__(**kwargs)
 
