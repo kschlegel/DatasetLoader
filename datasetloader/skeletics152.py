@@ -5,9 +5,10 @@ import re
 import numpy as np
 
 from .datasetloader import DatasetLoader
+from .subsetmixin import SubsetMixin
 
 
-class Skeletics152(DatasetLoader):
+class Skeletics152(SubsetMixin, DatasetLoader):
     """
     Skeletics152
     https://github.com/skelemoa/quovadis/tree/master/skeletics-152
@@ -138,12 +139,16 @@ class Skeletics152(DatasetLoader):
         self._length = 0
         youtube_regex = re.compile(r"(.*)_(\d{6})_(\d{6}).json")
         for subset, split in (("training", "train"), ("validation", "test")):
-            for action in self.actions:
+            for action_id, action in enumerate(self.actions):
+                action_id = self.select_action(action_id,
+                                               kwargs["select_actions"])
+                if action_id is None:
+                    continue
                 data_path = os.path.join(data_path, subset, action)
                 for filename in os.listdir(data_path):
                     self._data["keypoint-filename"].append(
                         os.path.join(data_path, filename))
-                    self._data["action"].append(action)
+                    self._data["action"].append(action_id)
 
                     m = youtube_regex.match(filename)
                     self._data["youtube_id"].append(m.group(1))

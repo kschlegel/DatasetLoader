@@ -1,52 +1,65 @@
 # DatasetLoader
 This is a utility project to provide a convenient and consistent access to various datasets.
 
-In my research I am currently interested in human action recognition and localisation from skeleton data. For datasets without skeleton data I use human pose estimation to obtain a de-identified, low-dimensional representation of the human action data contained in the video sequence. As such I have also become interested in human pose estimation. I have mostly been working with CCTV footage which is not publically available as it contains personal information. Human action recognition from skeletal data has the crucial benefit of de-identification of the data.
-This project was started to allow convenient experimentation with various academic datasets with relevance to my research. This includes skeleton and RGB video datasets for action recognition or localisation, but also pose estimation dataset.
-More datasets will be added over time, in particular sports related datasets as recently I have become interested in applying some of the methods to sports applications. 
-
 ## Contents
 1. [Usage](#usage)
 2. [Datasets](#datasets)
-   1. [LSP](#lsp)
-   2. [JHMDB](#jhmdb)
-   3. [HARPET](#harpet)
-   4. [MPII](#mpii)
-   5. [UCF Sports](#ucf_sports)
-   6. [PKU-MMD](#pku-mmd)
+   1. [NTU RGBD](#ntu_rgbd)
+   2. [Skeletics152](#skeletics152)
+   3. [ChaLearn2013](#chalearn2013)
+   4. [LSP](#lsp)
+   5. [JHMDB](#jhmdb)
+   6. [HARPET](#harpet)
+   7. [MPII](#mpii)
+   8. [UCF Sports](#ucf_sports)
+   9. [PKU-MMD](#pku-mmd)
 3. [Requirements](#requirements)
 
 ## Usage
-A DatasetLoader object will load the information contained in the dataset in its constructor. The object provides an easy but flexible interface to query any or all of this information. As a simple example:
+By default most datasets will be loaded lazily by the DatasetLoader object. The constructor will load the file structure and any data where there is no clear benefit in delaying loading (e.g. all data contained in a single file). Data that is distributed accross separate files for individual dataset elements is held as filenames and loaded on request. By passing no_lazy_loading=True to the constructor this can be changed to loading all data at once. Some of the small datasets which have all their data in single files the dataset will never load lazily.
+The object provides an easy but flexible interface to query any or all of this information. As a simple example:
 ```python
 lsp_ds = LSP(PATH_TO_DATASET)
 
-filenames = lsp_ds.get_data("image-filenames", "all")
-# filenames is now a list of all filenames of images in the Leeds Sport Pose dataset
+lsp.select_col("image-filename")
+sample = lsp[5]
+#sample["image-filename"] is now the filename of the 6th item of the dataset
 
-it = lsp_ds.get_iterator(("image-filenames","keypoints"), "train")
-for filename, keypoints in it:
-	# This iterates over filenames and keypoints of elements of the training set of Leeds Sport Pose
+lsp.set_cols("image-filename", "keypoints2D")
+for filename, keypoints in lsp.iterate(return_tuple=True):
+	# This iterates over filenames and keypoints of elements of Leeds Sport Pose
 	load_image(filename)
 	...
 ```
-Both the get_data and get_iterator methods in their first argument take a string or an iterable of strings describing the data components to be retrieved. The idea behind this is that in an action recognition from skeleton data context one will want to use keypoint and action class data, whereas in a pose estimation context one needs the filenames of the images/video and the keypoints. An end-to-end solution consuming image/video data, estimating the pose of people and then classifying their action is going to need all three, filenames, keypoints and action classes. 
+In particular, to select the parts of the data you want from the dataset, use the `select_col(col)` and `deselect_col(col)` methods to add or remove single data columns from the DatasetLoader object, or `set_cols(col1, col2, ...)` to directly set the selection to a given set of columns. Following this subscripting of the DatasetLoader object will return a dictionary with the column names as keys and the data of the indexed sample as values.
 
-The interface is loosly inspired by the dataset modules of [torchvision](https://pytorch.org/docs/stable/torchvision/datasets.html). A crucial difference is that torchvision will in video datasets provide video sequences of fixed length. Using a signature based approach I can handle variable length time sequences and thus want the original sequence length.
+The `iterate([split_name],[split],[return_tuple])` method provides iterable access to the dataset. Using split_name you can select a particular pre-defined split of the dataset and the split argument picks between train/val/test part. If return_tuple=False (the default) the iterator returns dictionaries as obtained from subscripting. if return_tuple=True the data is returned as a tuple with the elements ordered in the same order the columns were selected.
+The iterato method can be used to easily create [path-signature feature datasets](https://github.com/kschlegel/psfdataset)
 
-The get_iterator method can be used to easily create [path-signature feature datasets](https://github.com/kschlegel/psfdataset)
-```python
-dataset = PSFDataset()
-dataset.from_iterator(dataset.get_iterator(("keypoints", "actions"), "train"))
+Using `set_split(split_name)` you can select a split to be used which can then be accessed using the `trainingset`,`validationset` and `testset` properties. These properties support subscripting and implement \_\_len\_\_. The subset selection can also be done at time of initialisation, by passing the name of the split to use as `split` argument to the constructor.
+
+Lastly, all DatasetLoader classes provide a `add_argparse_args` method to add command line arguments for arguments applying to all datasets (such as the path to the data) and potential arguments specific to a given dataset. If you are using more than one dataset it is safe to call all their `add_argparse_args` methods. The resulting command line args can be passed into the datasetloader obejct as an unpacked dictionary.
+```
+args = vars(parser.parse(args))
+dataset = NTURGBD(**args)
 ```
 
 ## Datasets
 This sections lists and briefly describes the supported Datasets and any special properties.
 
+### NTU RGBD
+NTU RGB+D Action Recognition Dataset [NTU RGB+D](http://rose1.ntu.edu.sg/Datasets/actionRecognition.asp)
+    
+### Skeletics152
+[Skeletics152](https://github.com/skelemoa/quovadis/tree/master/skeletics-152)
+
+### ChaLearn2013
+ChaLearn Looking at People - Gesture Challenge [ChaLearn2013](https://gesture.chalearn.org/2013-multi-modal-challenge/data-2013-challenge)
+    
 ### Leeds Sports Pose
 Leeds Sports Pose ([LSP](https://sam.johnson.io/research/lsp.html))
 Leeds Sports Pose Extended ([LSP Extended](https://sam.johnson.io/research/lspet.html))
-Leeds Sports Pose Extended re-annotated by [Pishchulin et al](https://pose.mpi-inf.mpg.de/contents/pishchulin16cvpr.pdf) ([LSP Extended, re-annotadet](http://datasets.d2.mpi-inf.mpg.de/hr-lspet/hr-lspet.zip))
+Leeds Sports Pose Extended re-annotated by [Pishchulin et al](https://pose.mpi-inf.mpg.de/contents/pishchulin16cvpr.pdf) ([LSP Extended, re-annotated](http://datasets.d2.mpi-inf.mpg.de/hr-lspet/hr-lspet.zip))
 
 Provide:
 * image-filenames
@@ -120,7 +133,7 @@ Provides:
 ds = UCFSports(PATH_TO_DATASET)
 ```
 
-### PKU-MDD
+### PKU-MMD
 Peking University Multi-Modality Dataset ([PKU-MDD](http://www.icst.pku.edu.cn/struct/Projects/PKUMMD.html))
 
 Provides:
@@ -139,8 +152,7 @@ Loading of skeletons can be deferred as this datasets has almost 7GB worth of sk
 ds = PKUMMD(PATH_TO_DATASET)
 ds = PKUMMD(PATH_TO_DATASET, single_person=True)
 ds = PKUMMD(PATH_TO_DATASET, load_skeletons=False)
-for skeleton_file in pku.get_iterator("skeleton-filenames"):
-	keypoints = pku.load_keypointfile(skeleton_file)
+
 ```
 
 ## Requirements
