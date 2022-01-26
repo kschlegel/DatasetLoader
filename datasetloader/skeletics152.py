@@ -144,10 +144,10 @@ class Skeletics152(SubsetMixin, DatasetLoader):
                                                kwargs["select_actions"])
                 if action_id is None:
                     continue
-                data_path = os.path.join(data_path, subset, action)
-                for filename in os.listdir(data_path):
+                folder = os.path.join(data_path, subset, action)
+                for filename in os.listdir(folder):
                     self._data["keypoint-filename"].append(
-                        os.path.join(data_path, filename))
+                        os.path.join(folder, filename))
                     self._data["action"].append(action_id)
 
                     m = youtube_regex.match(filename)
@@ -174,10 +174,10 @@ class Skeletics152(SubsetMixin, DatasetLoader):
                 data = json.load(f)
         except json.decoder.JSONDecodeError:
             print("Json decoder error:", filename)
-            return False, None
+            return None, None, None, None
         if len(data) == 0:
             # print("No person?", filename)
-            return None, None
+            return None, None, None, None
         keypoints = []
         frame_ids = []
         pred_cams = []
