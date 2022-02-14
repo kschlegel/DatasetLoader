@@ -7,12 +7,13 @@ This is a utility project to provide a convenient and consistent access to vario
    1. [NTU RGBD](#ntu_rgbd)
    2. [Skeletics152](#skeletics152)
    3. [ChaLearn2013](#chalearn2013)
-   4. [LSP](#lsp)
-   5. [JHMDB](#jhmdb)
-   6. [HARPET](#harpet)
-   7. [MPII](#mpii)
-   8. [UCF Sports](#ucf_sports)
-   9. [PKU-MMD](#pku-mmd)
+   4. [BerkeleyMHAD](#berkeleymhad)
+   5. [LSP](#lsp)
+   6. [JHMDB](#jhmdb)
+   7. [HARPET](#harpet)
+   8. [MPII](#mpii)
+   9. [UCF Sports](#ucf_sports)
+   10. [PKU-MMD](#pku-mmd)
 3. [Requirements](#requirements)
 
 ## Usage
@@ -49,13 +50,62 @@ This sections lists and briefly describes the supported Datasets and any special
 
 ### NTU RGBD
 NTU RGB+D Action Recognition Dataset [NTU RGB+D](http://rose1.ntu.edu.sg/Datasets/actionRecognition.asp)
+
+Currently only keypoint data is included.
+Expected filestructure:
+./
+|- NTU_RGBD_samples_with_missing_skeletons.txt
+|- NTU_RGBD120_samples_with_missing_skeletons.txt
+|- nturgb+d_skeletons
+|  |- ...keypoint data files
+
     
 ### Skeletics152
 [Skeletics152](https://github.com/skelemoa/quovadis/tree/master/skeletics-152)
 
+Expected filestructure:
+./
+|- training
+|  |- action_class
+|  |  |- keypoint data files
+|  |-...
+|
+|- validation
+|  |- action_class
+|  |  |- keypoint data files
+|  |-...
+
 ### ChaLearn2013
 ChaLearn Looking at People - Gesture Challenge [ChaLearn2013](https://gesture.chalearn.org/2013-multi-modal-challenge/data-2013-challenge)
+
+Currently only video and keypoint data is included.
+Expected filestructure:
+./
+|- trainingdata
+|  |- SampleXXXXX
+|  |  |- SampleXXXXX_color.mp4
+|  |  |- SampleXXXXX_data.mp4
+|  |-...
+|
+|- validationdata
+|  |- SampleXXXXX
+|  |  |- SampleXXXXX_color.mp4
+|  |  |- SampleXXXXX_data.mp4
+|  |-...
     
+### Berkeley MHAD
+Berkeley Multimodal Human Action Database (MHAD) [BerkeleyMHAD](https://tele-immersion.citris-uc.org/berkeley_mhad)
+
+Expected filestructure:
+./
+|- Mocap
+|  |- SkeletalData
+|  |  |- csv
+|  |  |  |- skl_sSS_aAA_rRR_pos.csv
+|  |  |  |- ...
+Here the csv files have been converted from the original BVH files.
+
+
 ### Leeds Sports Pose
 Leeds Sports Pose ([LSP](https://sam.johnson.io/research/lsp.html))
 Leeds Sports Pose Extended ([LSP Extended](https://sam.johnson.io/research/lspet.html))
