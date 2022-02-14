@@ -52,18 +52,21 @@ This sections lists and briefly describes the supported Datasets and any special
 NTU RGB+D Action Recognition Dataset [NTU RGB+D](http://rose1.ntu.edu.sg/Datasets/actionRecognition.asp)
 
 Currently only keypoint data is included.
-Expected filestructure:
+
+Expected file structure:
+```
 ./
 |- NTU_RGBD_samples_with_missing_skeletons.txt
 |- NTU_RGBD120_samples_with_missing_skeletons.txt
 |- nturgb+d_skeletons
 |  |- ...keypoint data files
-
+```
     
 ### Skeletics152
 [Skeletics152](https://github.com/skelemoa/quovadis/tree/master/skeletics-152)
 
-Expected filestructure:
+Expected file structure:
+```
 ./
 |- training
 |  |- action_class
@@ -74,12 +77,15 @@ Expected filestructure:
 |  |- action_class
 |  |  |- keypoint data files
 |  |-...
+```
 
 ### ChaLearn2013
 ChaLearn Looking at People - Gesture Challenge [ChaLearn2013](https://gesture.chalearn.org/2013-multi-modal-challenge/data-2013-challenge)
 
 Currently only video and keypoint data is included.
-Expected filestructure:
+
+Expected file structure:
+```
 ./
 |- trainingdata
 |  |- SampleXXXXX
@@ -92,17 +98,20 @@ Expected filestructure:
 |  |  |- SampleXXXXX_color.mp4
 |  |  |- SampleXXXXX_data.mp4
 |  |-...
-    
+```
+
 ### Berkeley MHAD
 Berkeley Multimodal Human Action Database (MHAD) [BerkeleyMHAD](https://tele-immersion.citris-uc.org/berkeley_mhad)
 
-Expected filestructure:
+Expected file structure:
+```
 ./
 |- Mocap
 |  |- SkeletalData
 |  |  |- csv
 |  |  |  |- skl_sSS_aAA_rRR_pos.csv
 |  |  |  |- ...
+```
 Here the csv files have been converted from the original BVH files.
 
 
